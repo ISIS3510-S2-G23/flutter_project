@@ -18,6 +18,9 @@ jobs:
         with:
           flutter-version: '3.7.0'
 
+      - name: Navigate to project directory
+        run: cd flutter_app
+        
       - name: Install dependencies
         run: flutter pub get
 
