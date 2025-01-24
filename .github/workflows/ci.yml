@@ -11,23 +11,21 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.7.0'
+          flutter-version: 3.7.0
 
-      - name: Navigate to project directory
-        run: cd flutter_app
-        
+      - name: upgrade flutter
+        run: flutter upgrade
+
       - name: Install dependencies
-        run: flutter pub get
+        run: cd flutter_app && flutter pub get
 
       - name: Run tests
-        run: flutter test
+        run: cd flutter_app && flutter test
 
       - name: Build APK (release)
-        run: flutter build apk --release
-
-
+        run: cd flutter_app && flutter build apk --release
