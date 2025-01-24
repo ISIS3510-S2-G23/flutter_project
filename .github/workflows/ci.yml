@@ -25,7 +25,7 @@ jobs:
         run: cd flutter_app && flutter pub get
 
       - name: Run tests
-        run: flutter test
+        run: cd flutter_app && flutter test
 
       - name: Build APK (release)
-        run: flutter build apk --release
+        run: cd flutter_app && flutter build apk --release
