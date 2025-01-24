@@ -16,8 +16,11 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.7.0'
+          flutter-version: '3.6.1'
 
+      - name: Navigate to project directory
+        run: cd flutter_app
+        
       - name: Install dependencies
         run: flutter pub get
 
