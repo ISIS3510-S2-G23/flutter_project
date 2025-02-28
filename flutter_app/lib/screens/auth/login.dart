@@ -1,3 +1,4 @@
+import 'package:ecosphere/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class Login extends StatefulWidget {
@@ -155,10 +156,13 @@ class _LoginState extends State<Login> {
                                 color: Colors.white),
                             minimumSize: Size(400, 50),
                           ),
-                          onPressed: () {
+                          onPressed: () async {
                             if (_formKey.currentState!.validate()) {
                               _formKey.currentState!.save();
-                              // TODO auth logica
+                              await AuthService().login(
+                                  email: _email,
+                                  password: _password,
+                                  context: context);
                             }
                           },
                           child: Text(
@@ -216,7 +220,7 @@ class _LoginState extends State<Login> {
                         SizedBox(height: 20),
                         GestureDetector(
                           onTap: () {
-                            // TODO Lógica para iniciar sesión con Google
+                            AuthService().googleSignIn(context: context);
                           },
                           child: Image.asset(
                             'assets/images/Logos/Google.png',

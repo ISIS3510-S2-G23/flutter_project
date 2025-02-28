@@ -1,3 +1,4 @@
+import 'package:ecosphere/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class Signup extends StatefulWidget {
@@ -12,7 +13,6 @@ class _SignupState extends State<Signup> {
   String _email = '';
   String _user = '';
   String _password = '';
-  String _password_repeat = '';
   bool _obscureText = true;
 
   @override
@@ -89,6 +89,11 @@ class _SignupState extends State<Signup> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
                       }
+                      if (!value.contains(RegExp(
+                        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                      ))) {
+                        return 'Please enter a valid email';
+                      }
                       return null;
                     },
                     onSaved: (value) {
@@ -145,6 +150,11 @@ class _SignupState extends State<Signup> {
                       ),
                     ),
                     obscureText: _obscureText,
+                    onChanged: (value) {
+                      setState(() {
+                        _password = value;
+                      });
+                    },
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your password';
@@ -157,44 +167,40 @@ class _SignupState extends State<Signup> {
                   ),
                   SizedBox(height: 20),
                   TextFormField(
-                    decoration: InputDecoration(
-                      labelText: 'Confirm your password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                          color: Theme.of(context).colorScheme.primary,
+                      decoration: InputDecoration(
+                        labelText: 'Confirm your password',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(
+                            vertical: 10.0, horizontal: 15.0),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureText
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscureText = !_obscureText;
+                            });
+                          },
                         ),
                       ),
-                      contentPadding: EdgeInsets.symmetric(
-                          vertical: 10.0, horizontal: 15.0),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureText
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscureText = !_obscureText;
-                          });
-                        },
-                      ),
-                    ),
-                    obscureText: _obscureText,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter again your password';
-                      }
-                      if (value != _password) {
-                        return 'Please make sure passwords are identical';
-                      }
-                      return null;
-                    },
-                    onSaved: (value) {
-                      _password_repeat = value!;
-                    },
-                  ),
+                      obscureText: _obscureText,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter again your password';
+                        }
+                        if (value != _password) {
+                          return 'Please make sure passwords are identical';
+                        }
+                        return null;
+                      }),
                   SizedBox(height: 20),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -205,10 +211,14 @@ class _SignupState extends State<Signup> {
                           color: Colors.white),
                       minimumSize: Size(400, 50),
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         _formKey.currentState!.save();
-                        // TODO auth logica
+                        await AuthService().signup(
+                            username: _user,
+                            email: _email,
+                            password: _password,
+                            context: context);
                       }
                     },
                     child: Text(
