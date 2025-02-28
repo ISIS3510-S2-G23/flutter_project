@@ -1,16 +1,25 @@
-# flutter_app
+# Ecosphere
 
-A new Flutter project...
+## 🌍 Overview
 
-## Getting Started
+Ecosphere is a mobile application designed to promote recycling and sustainability through an interactive platform. Users can explore educational content, find nearby recycling points, participate in eco-friendly challenges, and contribute to a sustainable community.
 
-This project is a starting point for a Flutter application.
+## 📱 Features
 
-A few resources to get you started if this is your first Flutter project:
+- **Walkthrough Screens**: Introduces users to the app's purpose and main functionalities.
+- **User Authentication**: Sign up and log in with secure authentication.
+- **Recycling Points**: Locate and contribute to a database of verified recycling locations.
+- **Community Engagement**: Post, vote, and discuss eco-friendly topics.
+- **Challenges & Rewards**: Participate in sustainability challenges and earn rewards.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 🛠️ Tech Stack
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- **Framework**: Flutter
+- **Language**: Dart
+- **State Management**: Provider
+- **Backend**: Firebase Authentication & Firestore
+- **Maps Integration**: Google Maps API
+
+---
+
+🌱 _Let's build a greener future together with Ecosphere!_ 🌍

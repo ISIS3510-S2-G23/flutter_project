@@ -1,3 +1,4 @@
+import 'package:ecosphere/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
 class Login extends StatefulWidget {
@@ -12,6 +13,7 @@ class _LoginState extends State<Login> {
   String _email = '';
   String _password = '';
   bool _obscureText = true;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -155,16 +157,34 @@ class _LoginState extends State<Login> {
                                 color: Colors.white),
                             minimumSize: Size(400, 50),
                           ),
-                          onPressed: () {
+                          onPressed: () async {
                             if (_formKey.currentState!.validate()) {
                               _formKey.currentState!.save();
-                              // TODO auth logica
+                              setState(() {
+                                _isLoading = true;
+                              });
+                              await AuthService().login(
+                                  email: _email,
+                                  password: _password,
+                                  context: context);
+                              setState(() {
+                                _isLoading = false;
+                              });
                             }
                           },
-                          child: Text(
-                            'Log in',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          child: _isLoading
+                              ? SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                )
+                              : Text(
+                                  'Log in',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                         ),
                         SizedBox(height: 20),
                         Row(
@@ -216,7 +236,7 @@ class _LoginState extends State<Login> {
                         SizedBox(height: 20),
                         GestureDetector(
                           onTap: () {
-                            // TODO Lógica para iniciar sesión con Google
+                            AuthService().googleSignIn(context: context);
                           },
                           child: Image.asset(
                             'assets/images/Logos/Google.png',
