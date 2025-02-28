@@ -13,6 +13,7 @@ class _LoginState extends State<Login> {
   String _email = '';
   String _password = '';
   bool _obscureText = true;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -159,16 +160,31 @@ class _LoginState extends State<Login> {
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
                               _formKey.currentState!.save();
+                              setState(() {
+                                _isLoading = true;
+                              });
                               await AuthService().login(
                                   email: _email,
                                   password: _password,
                                   context: context);
+                              setState(() {
+                                _isLoading = false;
+                              });
                             }
                           },
-                          child: Text(
-                            'Log in',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          child: _isLoading
+                              ? SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                )
+                              : Text(
+                                  'Log in',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                         ),
                         SizedBox(height: 20),
                         Row(
