@@ -14,6 +14,7 @@ class _SignupState extends State<Signup> {
   String _user = '';
   String _password = '';
   bool _obscureText = true;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -214,30 +215,32 @@ class _SignupState extends State<Signup> {
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         _formKey.currentState!.save();
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (BuildContext context) {
-                            return Center(
-                              child: CircularProgressIndicator(
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
-                                strokeWidth: 2.0,
-                              ),
-                            );
-                          },
-                        );
+                        setState(() {
+                          _isLoading = true;
+                        });
                         await AuthService().signup(
                             username: _user,
                             email: _email,
                             password: _password,
                             context: context);
+                        setState(() {
+                          _isLoading = false;
+                        });
                       }
                     },
-                    child: Text(
-                      'Sign up',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    child: _isLoading
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Text(
+                            'Sign up',
+                            style: TextStyle(color: Colors.white),
+                          ),
                   ),
                   SizedBox(height: 200),
                 ],
