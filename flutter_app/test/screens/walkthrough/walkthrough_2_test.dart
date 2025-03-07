@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ecosphere/screens/walkthrough/walkthrough_2.dart';
+import 'package:ecosphere/views/walkthrough/walkthrough_2.dart';
 
 void main() {
   testWidgets('Walkthrough2 renders correctly', (WidgetTester tester) async {
