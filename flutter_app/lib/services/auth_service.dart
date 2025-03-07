@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   Future<void> signup(
@@ -17,13 +18,19 @@ class AuthService {
         password: password,
       );
 
+      await userCredential.user?.updateDisplayName(username);
+
       await FirebaseFirestore.instance
           .collection('users')
-          .doc(userCredential.user?.uid)
+          .doc('user-$email')
           .set({
         'username': username,
         'email': email,
       });
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('username', username);
+
       Navigator.pushReplacementNamed(context, '/signup-success');
     } on FirebaseAuthException catch (e) {
       String message = 'Something went wrong';
@@ -32,7 +39,6 @@ class AuthService {
       } else if (e.code == 'weak-password') {
         message = 'The password is too weak.';
       }
-      //FIXME estilos de toast
       Fluttertoast.showToast(
           msg: message,
           toastLength: Toast.LENGTH_SHORT,
@@ -54,11 +60,33 @@ class AuthService {
       required String password,
       required BuildContext context}) async {
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      Navigator.pushReplacementNamed(context, '/home');
+
+      QuerySnapshot querySnapshot =
+          await FirebaseFirestore.instance.collection('users').get();
+
+      DocumentSnapshot? userDoc;
+      for (var doc in querySnapshot.docs) {
+        if (doc['email'] == email) {
+          userDoc = doc;
+          break;
+        }
+      }
+
+      if (userDoc != null) {
+        String username = userDoc.get('username');
+
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('username', username);
+
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        throw Exception('User not found');
+      }
     } on FirebaseAuthException catch (e) {
       String message = 'Something went wrong';
       if (e.code == 'user-not-found') {
@@ -101,7 +129,14 @@ class AuthService {
         idToken: googleSignInAuthentication.idToken,
       );
 
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+
+      String? username = userCredential.user?.displayName;
+
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('username', username ?? '');
+
       Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
       Fluttertoast.showToast(

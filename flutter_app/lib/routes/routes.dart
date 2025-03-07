@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../screens/walkthrough/walkthrough_1.dart';
-import '../screens/walkthrough/walkthrough_2.dart';
-import '../screens/walkthrough/walkthrough_3.dart';
-import '../screens/auth/login.dart';
-import '../screens/auth/signup.dart';
-import '../screens/auth/signup_success.dart';
-import '../screens/home/home.dart';
+import '../views/walkthrough/walkthrough_1.dart';
+import '../views/walkthrough/walkthrough_2.dart';
+import '../views/walkthrough/walkthrough_3.dart';
+import '../views/auth/login.dart';
+import '../views/auth/signup.dart';
+import '../views/auth/signup_success.dart';
+import '../views/home/home.dart';
 
 class Routes {
   static final Map<String, WidgetBuilder> routes = {
