@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 
-class Notifications extends StatelessWidget {
-  const Notifications({super.key});
+class AddPost extends StatelessWidget {
+  const AddPost({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
         title: Text(
-          'Notifications',
+          'Add Post',
           style: TextStyle(
             color: Color(0xFF49447E),
             fontWeight: FontWeight.bold,

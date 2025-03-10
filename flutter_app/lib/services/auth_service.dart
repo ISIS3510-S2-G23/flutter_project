@@ -60,6 +60,7 @@ class AuthService {
       required String password,
       required BuildContext context}) async {
     try {
+      // ignore: unused_local_variable
       UserCredential userCredential =
           await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
@@ -83,7 +84,7 @@ class AuthService {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('username', username);
 
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/index');
       } else {
         throw Exception('User not found');
       }
@@ -137,7 +138,7 @@ class AuthService {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('username', username ?? '');
 
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/index');
     } catch (e) {
       Fluttertoast.showToast(
           msg: e.toString(),
