@@ -1,6 +1,8 @@
 import 'package:ecosphere/firebase_options.dart';
 import 'package:ecosphere/routes/routes.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 Future<void> main() async {
@@ -8,6 +10,16 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  FlutterError.onError = (details) {
+    FirebaseCrashlytics.instance.recordFlutterError(details);
+  };
+
+  PlatformDispatcher.instance.onError = (errorDetails, stack) {
+    FirebaseCrashlytics.instance.recordError(errorDetails, stack);
+    return true;
+  };
+
   runApp(MyApp());
 }
 
