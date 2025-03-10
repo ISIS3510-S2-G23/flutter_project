@@ -43,8 +43,7 @@ class SignupSuccess extends StatelessWidget {
               SizedBox(height: 30),
               ElevatedButton(
                 onPressed: () {
-                  // FIXME: Navigate to preferences
-                  Navigator.pushReplacementNamed(context, '/home');
+                  Navigator.pushReplacementNamed(context, '/index');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF49447E),
