@@ -90,6 +90,7 @@ class _AddPostState extends State<AddPost> {
   Future<void> _uploadToFirebase() async {
     String title = _titleTextController.text;
     String text = _textController.text;
+    List<String> comments = [];
     List<String> tags = _tagsController.text
         .split(',')
         .map((tag) => tag.trim())
@@ -116,6 +117,8 @@ class _AddPostState extends State<AddPost> {
         'tags': tags,
         'user': user,
         'timestamp': FieldValue.serverTimestamp(),
+        'upvotes': 0,
+        'comments': comments
       });
       return;
     }
