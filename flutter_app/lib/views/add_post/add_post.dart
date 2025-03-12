@@ -1,28 +1,400 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-class AddPost extends StatelessWidget {
+class AddPost extends StatefulWidget {
   const AddPost({super.key});
+
+  @override
+  _AddPostState createState() => _AddPostState();
+}
+
+class _AddPostState extends State<AddPost> {
+  final TextEditingController _titleTextController = TextEditingController();
+  final TextEditingController _textController = TextEditingController();
+  final TextEditingController _tagsController = TextEditingController();
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImageFromCamera() async {
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.camera);
+    if (pickedFile != null) {
+      setState(() => _selectedImage = File(pickedFile.path));
+    }
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    final XFile? pickedFile =
+        await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() => _selectedImage = File(pickedFile.path));
+    }
+  }
+
+  void _showPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext bc) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: Icon(Icons.photo_library),
+                title: Text('Phone gallery'),
+                onTap: () {
+                  _pickImageFromGallery();
+                  Navigator.of(context).pop();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_camera),
+                title: Text('Camera'),
+                onTap: () {
+                  _pickImageFromCamera();
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<String?> _uploadImageToCloudinary(File imageFile) async {
+    String cloudName = "dhrkcqd33";
+    String uploadPreset = "ecosphere";
+
+    final url =
+        Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
+    var request = http.MultipartRequest("POST", url);
+    request.fields['upload_preset'] = uploadPreset;
+    request.files
+        .add(await http.MultipartFile.fromPath("file", imageFile.path));
+
+    var response = await request.send();
+    if (response.statusCode == 200) {
+      var responseData = await response.stream.bytesToString();
+      var jsonResponse = json.decode(responseData);
+      return jsonResponse["secure_url"];
+    }
+    return null;
+  }
+
+  Future<void> _uploadToFirebase() async {
+    String title = _titleTextController.text;
+    String text = _textController.text;
+    List<String> comments = [];
+    List<String> tags = _tagsController.text
+        .split(',')
+        .map((tag) => tag.trim())
+        .where((tag) => tag.isNotEmpty)
+        .toList();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? user = prefs.getString('username');
+    if (user == null) {
+      FirebaseCrashlytics.instance.log("No user found in SharedPreferences");
+      FirebaseCrashlytics.instance.recordError(
+        Exception("User not found in SharedPreferences"),
+        null,
+      );
+      return;
+    }
+
+    if (_selectedImage == null) {
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc('post-$user-${DateTime.now().millisecondsSinceEpoch}')
+          .set({
+        'title': title,
+        'text': text,
+        'tags': tags,
+        'user': user,
+        'timestamp': FieldValue.serverTimestamp(),
+        'upvotes': 0,
+        'comments': comments
+      });
+      return;
+    }
+
+    String? imageUrl = await _uploadImageToCloudinary(_selectedImage!);
+    if (imageUrl != null) {
+      await FirebaseFirestore.instance
+          .collection('posts')
+          .doc('post-$user-${DateTime.now().millisecondsSinceEpoch}')
+          .set({
+        'title': title,
+        'text': text,
+        'tags': tags,
+        'user': user,
+        'timestamp': FieldValue.serverTimestamp(),
+        'asset': imageUrl,
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
-          'Add Post',
-          style: TextStyle(
-            color: Color(0xFF49447E),
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
-        ),
-      ),
-      body: Center(
-        child: Text(
-          'TODO',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+      backgroundColor: Colors.white,
+      body: Padding(
+        padding: const EdgeInsets.all(18.0),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xFFD3ECED),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.all(18.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.73,
+                        child: Column(
+                          children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'What are you thinking today for the forum?',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            SizedBox(height: 18),
+                            Container(
+                              height: MediaQuery.of(context).size.height * 0.5,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.all(20.0),
+                              child: Column(
+                                children: [
+                                  TextField(
+                                    controller: _titleTextController,
+                                    decoration: InputDecoration(
+                                      hintText:
+                                          'An awesome title for your post',
+                                      hintStyle: TextStyle(color: Colors.grey),
+                                    ),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                  TextField(
+                                    controller: _textController,
+                                    decoration: InputDecoration(
+                                      hintText:
+                                          'Tell us here your green thoughts ♻️😁',
+                                      hintStyle: TextStyle(color: Colors.grey),
+                                      border: InputBorder.none,
+                                    ),
+                                    maxLines: 15,
+                                    keyboardType: TextInputType.multiline,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 18),
+                            Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    children: [
+                                      Wrap(
+                                        alignment: WrapAlignment.spaceAround,
+                                        children: [
+                                          FilterChip(
+                                            avatar: Icon(Icons.recycling,
+                                                color: Colors.white),
+                                            label: Text(
+                                              'Recycle',
+                                              style: TextStyle(fontSize: 12),
+                                            ),
+                                            labelStyle: TextStyle(
+                                              color: _tagsController.text
+                                                      .contains('Recycle')
+                                                  ? Colors.white
+                                                  : Colors.white,
+                                            ),
+                                            backgroundColor: Color(0xFFB9DCA8),
+                                            selectedColor: Color(0xFF64C533),
+                                            selected: _tagsController.text
+                                                .contains('Recycle'),
+                                            showCheckmark: false,
+                                            onSelected: (bool selected) {
+                                              setState(() {
+                                                if (selected) {
+                                                  _tagsController.text +=
+                                                      'Recycle,';
+                                                } else {
+                                                  _tagsController.text =
+                                                      _tagsController.text
+                                                          .replaceAll(
+                                                              'Recycle,', '');
+                                                }
+                                              });
+                                            },
+                                          ),
+                                          SizedBox(width: 5),
+                                          FilterChip(
+                                            avatar: Icon(Icons.compost,
+                                                color: Colors.white),
+                                            label: Text(
+                                              'Upcycle',
+                                              style: TextStyle(fontSize: 12),
+                                            ),
+                                            labelStyle: TextStyle(
+                                              color: _tagsController.text
+                                                      .contains('Upcycle')
+                                                  ? Colors.white
+                                                  : Colors.white,
+                                            ),
+                                            backgroundColor: Color(0xFFA8B7DC),
+                                            selectedColor: Color(0xFF3D5CFF),
+                                            selected: _tagsController.text
+                                                .contains('Upcycle'),
+                                            showCheckmark: false,
+                                            onSelected: (bool selected) {
+                                              setState(() {
+                                                if (selected) {
+                                                  _tagsController.text +=
+                                                      'Upcycle,';
+                                                } else {
+                                                  _tagsController.text =
+                                                      _tagsController.text
+                                                          .replaceAll(
+                                                              'Upcycle,', '');
+                                                }
+                                              });
+                                            },
+                                          ),
+                                          SizedBox(width: 5),
+                                          FilterChip(
+                                            avatar: Icon(Icons.directions_bike,
+                                                color: Colors.white),
+                                            label: Text(
+                                              'Transport',
+                                              style: TextStyle(fontSize: 12),
+                                            ),
+                                            labelStyle: TextStyle(
+                                              color: _tagsController.text
+                                                      .contains('Transport')
+                                                  ? Colors.white
+                                                  : Colors.white,
+                                            ),
+                                            backgroundColor: Color(0xFFDCA8A8),
+                                            selectedColor: Color.fromARGB(
+                                                255, 209, 46, 46),
+                                            selected: _tagsController.text
+                                                .contains('Transport'),
+                                            showCheckmark: false,
+                                            onSelected: (bool selected) {
+                                              setState(() {
+                                                if (selected) {
+                                                  _tagsController.text +=
+                                                      'Transport,';
+                                                } else {
+                                                  _tagsController.text =
+                                                      _tagsController.text
+                                                          .replaceAll(
+                                                              'Transport,', '');
+                                                }
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  Column(
+                                    children: [
+                                      IconButton(
+                                          icon:
+                                              Icon(Icons.add_a_photo_outlined),
+                                          onPressed: () => _showPicker(context))
+                                    ],
+                                  )
+                                ]),
+                            SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                _selectedImage != null
+                                    ? Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.check_circle,
+                                              color: Color(0xFF03898C)),
+                                          SizedBox(width: 5),
+                                          Text(
+                                            'Image uploaded',
+                                            style: TextStyle(
+                                                color: Color(0xFF03898C)),
+                                          ),
+                                        ],
+                                      )
+                                    : SizedBox(width: 10),
+                              ],
+                            ),
+                            SizedBox(height: 10),
+                            ElevatedButton(
+                                onPressed: () async {
+                                  await _uploadToFirebase();
+                                  Navigator.pushNamed(context, '/index');
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Color(0xFFA8DADC),
+                                  padding: EdgeInsets.symmetric(vertical: 20),
+                                  minimumSize: Size(double.infinity, 50),
+                                  textStyle: TextStyle(
+                                      color: Color(0xFF49447E),
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                child: Text("Post")),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/index');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    shape: CircleBorder(),
+                    padding: EdgeInsets.all(20),
+                  ),
+                  child: Icon(
+                    Icons.close,
+                    color: Color(0xFF49447E),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
