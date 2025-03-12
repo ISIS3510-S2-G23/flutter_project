@@ -3,6 +3,8 @@ import 'package:ecosphere/routes/routes.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloudinary_url_gen/cloudinary.dart';
+import 'package:cloudinary_flutter/cloudinary_context.dart';
 import 'package:flutter/material.dart';
 
 Future<void> main() async {
@@ -19,6 +21,9 @@ Future<void> main() async {
     FirebaseCrashlytics.instance.recordError(errorDetails, stack);
     return true;
   };
+
+  CloudinaryContext.cloudinary = Cloudinary.fromCloudName(
+      cloudName: 'dhrkcqd33', apiKey: '537811732293891');
 
   runApp(MyApp());
 }

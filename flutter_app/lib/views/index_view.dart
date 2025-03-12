@@ -2,7 +2,7 @@ import 'package:ecosphere/views/account/account.dart';
 import 'package:ecosphere/views/add_post/add_post.dart';
 import 'package:ecosphere/views/home/home.dart';
 import 'package:ecosphere/views/notifications/notifications.dart';
-import 'package:ecosphere/views/points/near_me.dart';
+import 'package:ecosphere/views/points/index_points.dart';
 import 'package:flutter/material.dart';
 
 class IndexScreen extends StatefulWidget {
@@ -39,6 +39,7 @@ class _IndexScreenState extends State<IndexScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
