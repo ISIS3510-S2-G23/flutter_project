@@ -10,7 +10,21 @@ class Points extends StatefulWidget {
   _PointsState createState() => _PointsState();
 }
 
-class _PointsState extends State<Points> {
+class _PointsState extends State<Points> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -68,11 +82,12 @@ class _PointsState extends State<Points> {
                 ),
               ],
             ),
-            bottom: const TabBar(
+            bottom: TabBar(
+              controller: _tabController,
               labelColor: Color(0xFF49447E),
               unselectedLabelColor: Color(0xFF7D84B2),
               indicatorColor: Color(0xFF49447E),
-              tabs: [
+              tabs: const [
                 Tab(
                   child: Text(
                     "Near me",
@@ -110,9 +125,10 @@ class _PointsState extends State<Points> {
               ),
               Expanded(
                 child: TabBarView(
+                  controller: _tabController,
                   children: [
                     NearMe(),
-                    Challenges(),
+                    Challenges(tabController: _tabController),
                     Rewards(),
                   ],
                 ),
