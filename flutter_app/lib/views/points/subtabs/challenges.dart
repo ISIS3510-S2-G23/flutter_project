@@ -64,7 +64,13 @@ class _ChallengesState extends State<Challenges> {
                         return Center(child: CircularProgressIndicator());
                       }
                       var userChallengeData = userChallengeSnapshot.data!;
-                      bool isCompleted = userChallengeData['completed'];
+                      bool isCompleted = userChallengeData.exists
+                          ? userChallengeData['completed']
+                          : false;
+
+                      int progress = userChallengeData.exists
+                          ? (userChallengeData['progress'] * 100).toInt()
+                          : 0;
 
                       return GestureDetector(
                         onTap: () {
@@ -259,7 +265,7 @@ class _ChallengesState extends State<Challenges> {
                                       challenge['title'],
                                     ),
                                     Text(
-                                      '${(userChallengeData['progress'] * 100).toInt()}% completed',
+                                      '${progress}% completed',
                                       style: TextStyle(
                                           fontSize: 12,
                                           color: Color(0xFFB8B8D2)),
