@@ -50,7 +50,7 @@ class _PointsState extends State<Points> with SingleTickerProviderStateMixin {
                           style: TextStyle(
                             color: Color(0xFF49447E),
                             fontWeight: FontWeight.bold,
-                            fontSize: 24,
+                            fontSize: 22,
                           ),
                         ),
                       ],
@@ -61,8 +61,8 @@ class _PointsState extends State<Points> with SingleTickerProviderStateMixin {
                       children: [
                         Image.asset(
                           'assets/images/People/WBG/person8.png',
-                          width: 65,
-                          height: 65,
+                          width: 60,
+                          height: 60,
                         ),
                       ],
                     ),

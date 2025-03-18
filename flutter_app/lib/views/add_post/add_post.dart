@@ -162,7 +162,7 @@ class _AddPostState extends State<AddPost> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.73,
+                        height: MediaQuery.of(context).size.height * 0.755,
                         child: Column(
                           children: [
                             Align(
@@ -204,18 +204,18 @@ class _AddPostState extends State<AddPost> {
                                       hintStyle: TextStyle(color: Colors.grey),
                                       border: InputBorder.none,
                                     ),
-                                    maxLines: 15,
+                                    maxLines: 13,
                                     keyboardType: TextInputType.multiline,
                                   ),
                                 ],
                               ),
                             ),
                             SizedBox(height: 18),
-                            Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                            Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Column(
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
                                       Wrap(
                                         alignment: WrapAlignment.spaceAround,
@@ -323,40 +323,33 @@ class _AddPostState extends State<AddPost> {
                                       ),
                                     ],
                                   ),
-                                  Column(
+                                  Row(
                                     children: [
                                       IconButton(
                                           icon:
                                               Icon(Icons.add_a_photo_outlined),
-                                          onPressed: () => _showPicker(context))
+                                          onPressed: () =>
+                                              _showPicker(context)),
+                                      _selectedImage != null
+                                          ? Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.check_circle,
+                                                    color: Color(0xFF03898C)),
+                                                SizedBox(width: 5),
+                                                Text(
+                                                  'Image uploaded',
+                                                  style: TextStyle(
+                                                      color: Color(0xFF03898C)),
+                                                ),
+                                              ],
+                                            )
+                                          : SizedBox(width: 10),
                                     ],
                                   )
                                 ]),
-                            SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                SizedBox(
-                                  height: 10,
-                                ),
-                                _selectedImage != null
-                                    ? Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.check_circle,
-                                              color: Color(0xFF03898C)),
-                                          SizedBox(width: 5),
-                                          Text(
-                                            'Image uploaded',
-                                            style: TextStyle(
-                                                color: Color(0xFF03898C)),
-                                          ),
-                                        ],
-                                      )
-                                    : SizedBox(width: 10),
-                              ],
-                            ),
+                            SizedBox(height: 5),
                             SizedBox(height: 10),
                             ElevatedButton(
                                 onPressed: () async {
