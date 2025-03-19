@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Rewards extends StatefulWidget {
   final TabController tabController;
@@ -25,6 +26,15 @@ class _RewardsState extends State<Rewards> {
     setState(() {
       user = prefs.getString('username');
     });
+  }
+
+  void _launchURL(String url) async {
+    Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   @override
@@ -101,15 +111,18 @@ class _RewardsState extends State<Rewards> {
                                           ),
                                           SizedBox(height: 10),
                                           Text(
-                                            challenge['reward'],
+                                            challenge['title'],
                                             style: TextStyle(
-                                              fontSize: 12,
-                                              color: Color(0xFF858597),
+                                              fontSize: 14,
+                                              color: Color(0xFF49447E),
+                                              fontWeight: FontWeight.w500,
                                             ),
+                                            textAlign: TextAlign.center,
                                           ),
                                           SizedBox(height: 10),
                                           ElevatedButton(
                                             onPressed: () {
+                                              _launchURL(challenge['reward']);
                                               Navigator.of(context).pop();
                                             },
                                             style: ElevatedButton.styleFrom(
@@ -208,7 +221,7 @@ class _RewardsState extends State<Rewards> {
                             ),
                             title: Text(challenge['title']),
                             subtitle: isCompleted
-                                ? Text('Reward: ${challenge['reward']}')
+                                ? Text('Reward: ${challenge['description']}')
                                 : Text('Incomplete challenge'),
                             trailing: Icon(
                               isCompleted
