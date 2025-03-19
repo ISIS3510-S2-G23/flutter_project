@@ -129,7 +129,7 @@ class _PointsState extends State<Points> with SingleTickerProviderStateMixin {
                   children: [
                     NearMe(),
                     Challenges(tabController: _tabController),
-                    Rewards(),
+                    Rewards(tabController: _tabController),
                   ],
                 ),
               ),
