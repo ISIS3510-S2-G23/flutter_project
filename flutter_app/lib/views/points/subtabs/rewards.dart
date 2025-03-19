@@ -129,10 +129,22 @@ class _RewardsState extends State<Rewards> {
                                     if (!isCompleted)
                                       Column(
                                         children: [
-                                          Icon(
-                                            Icons.refresh,
-                                            color: Color(0xFF49447E),
-                                            size: 100,
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              color: Color(0xFFEAEAFF),
+                                              shape: BoxShape.rectangle,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(12.0),
+                                              child: Icon(
+                                                Icons.donut_large,
+                                                color: Color(0xFF49447E),
+                                                size: 100,
+                                              ),
+                                            ),
                                           ),
                                           SizedBox(height: 10),
                                           Text(
@@ -174,6 +186,26 @@ class _RewardsState extends State<Rewards> {
                           elevation: 5,
                           margin: EdgeInsets.symmetric(vertical: 10),
                           child: ListTile(
+                            leading: Container(
+                              decoration: BoxDecoration(
+                                color: isCompleted
+                                    ? Color(0xFFD3ECED)
+                                    : Color(0xFFEAEAFF),
+                                shape: BoxShape.rectangle,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Icon(
+                                  isCompleted
+                                      ? Icons.check_circle_outline
+                                      : Icons.donut_large_outlined,
+                                  color: isCompleted
+                                      ? Color(0xFF03898C)
+                                      : Color(0xFF49447E),
+                                ),
+                              ),
+                            ),
                             title: Text(challenge['title']),
                             subtitle: isCompleted
                                 ? Text('Reward: ${challenge['reward']}')
