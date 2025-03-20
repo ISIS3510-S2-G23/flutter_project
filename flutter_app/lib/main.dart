@@ -6,9 +6,14 @@ import 'package:flutter/foundation.dart';
 import 'package:cloudinary_url_gen/cloudinary.dart';
 import 'package:cloudinary_flutter/cloudinary_context.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: '.env');
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -25,11 +30,16 @@ Future<void> main() async {
   CloudinaryContext.cloudinary = Cloudinary.fromCloudName(
       cloudName: 'dhrkcqd33', apiKey: '537811732293891');
 
-  runApp(MyApp());
+  // Obtener la API key de ChatGPT
+  final chatGptApiKey = dotenv.env['KEY_ECOSPHERE'] ?? '';
+
+  runApp(MyApp(chatGptApiKey: chatGptApiKey));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String chatGptApiKey;
+
+  const MyApp({super.key, required this.chatGptApiKey});
 
   @override
   Widget build(BuildContext context) {

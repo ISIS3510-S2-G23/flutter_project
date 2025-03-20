@@ -6,22 +6,20 @@ import 'upvote_button.dart';
 import 'comments_button.dart';
 
 // Si usas librerías de Cloudinary, las importas aquí
-import 'package:cloudinary_url_gen/cloudinary.dart';
 import 'package:cloudinary_url_gen/transformation/effect/effect.dart';
 import 'package:cloudinary_url_gen/transformation/resize/resize.dart';
 import 'package:cloudinary_url_gen/transformation/transformation.dart';
 import 'package:cloudinary_flutter/image/cld_image.dart';
-import 'package:cloudinary_flutter/cloudinary_context.dart';
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+  const Home({super.key});
 
   @override
   State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  int _selectedIndex = 0;
+  
   final TextEditingController _searchController = TextEditingController();
 
   // Filtro de chips; si es null se muestran todos los posts
@@ -30,12 +28,6 @@ class _HomeState extends State<Home> {
   // Búsqueda local
   String _searchQuery = '';
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      // Aquí podrías navegar a otras pantallas
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
