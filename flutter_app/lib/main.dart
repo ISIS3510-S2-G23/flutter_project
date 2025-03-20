@@ -2,16 +2,30 @@ import 'package:ecosphere/firebase_options.dart';
 import 'package:ecosphere/routes/routes.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloudinary_url_gen/cloudinary.dart';
 import 'package:cloudinary_flutter/cloudinary_context.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print("Firebase inicializado correctamente");
+
+    // Probar conexión con Firebase Auth
+    await testFirebaseAuthConnection();
+
+    // Solicitar permisos de ubicación
+    await requestLocationPermission();
+  } catch (e) {
+    print("Error al inicializar Firebase: $e");
+  }
 
   FlutterError.onError = (details) {
     FirebaseCrashlytics.instance.recordFlutterError(details);
@@ -26,6 +40,29 @@ Future<void> main() async {
       cloudName: 'dhrkcqd33', apiKey: '537811732293891');
 
   runApp(MyApp());
+}
+
+/// ✅ **Función para probar conexión con Firebase Authentication**
+Future<void> testFirebaseAuthConnection() async {
+  try {
+    await FirebaseAuth.instance.signInAnonymously();
+    print("Firebase Auth funciona correctamente.");
+  } catch (e) {
+    print("Error en Firebase Auth: $e");
+  }
+}
+
+/// ✅ **Función para solicitar permisos de ubicación**
+Future<void> requestLocationPermission() async {
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
+  if (permission == LocationPermission.deniedForever) {
+    print("Los permisos de ubicación están denegados permanentemente.");
+  } else {
+    print("Permiso de ubicación concedido.");
+  }
 }
 
 class MyApp extends StatelessWidget {
