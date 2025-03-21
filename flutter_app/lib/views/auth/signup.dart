@@ -242,6 +242,7 @@ class _SignupState extends State<Signup> {
                             style: TextStyle(color: Colors.white),
                           ),
                   ),
+                  SizedBox(height: 200),
                 ],
               ),
             ),
