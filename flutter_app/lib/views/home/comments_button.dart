@@ -9,10 +9,10 @@ class CommentsButton extends StatelessWidget {
   final Map<String, dynamic> commentsMap;
 
   const CommentsButton({
-    Key? key,
+    super.key,
     required this.postId,
     required this.commentsMap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -47,10 +47,9 @@ class _CommentsDialog extends StatefulWidget {
   final Map<String, dynamic> commentsMap;
 
   const _CommentsDialog({
-    Key? key,
     required this.postId,
     required this.commentsMap,
-  }) : super(key: key);
+  });
 
   @override
   State<_CommentsDialog> createState() => _CommentsDialogState();
