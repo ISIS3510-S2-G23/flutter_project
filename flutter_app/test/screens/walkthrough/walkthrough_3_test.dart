@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ecosphere/views/walkthrough/walkthrough_3.dart';
+import 'package:ecosphere/views-viewmodels/walkthrough/walkthrough_3.dart';
 
 void main() {
   testWidgets('Walkthrough3 renders correctly and navigates to Login',

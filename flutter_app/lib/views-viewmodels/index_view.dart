@@ -1,8 +1,8 @@
-import 'package:ecosphere/views/account/account.dart';
-import 'package:ecosphere/views/add_post/add_post.dart';
-import 'package:ecosphere/views/home/home.dart';
-import 'package:ecosphere/views/notifications/notifications.dart';
-import 'package:ecosphere/views/points/index_points.dart';
+import 'package:ecosphere/views-viewmodels/account/account.dart';
+import 'package:ecosphere/views-viewmodels/add_post/add_post.dart';
+import 'package:ecosphere/views-viewmodels/home/home.dart';
+import 'package:ecosphere/views-viewmodels/notifications/notifications.dart';
+import 'package:ecosphere/views-viewmodels/points/index_points.dart';
 import 'package:flutter/material.dart';
 
 class IndexScreen extends StatefulWidget {

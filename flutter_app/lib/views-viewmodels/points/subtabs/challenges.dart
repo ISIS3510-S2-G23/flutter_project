@@ -1,7 +1,7 @@
 // ignore_for_file: prefer_interpolation_to_compose_strings
 
 import 'dart:io';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ecosphere/repositories/challenges_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -21,15 +21,16 @@ class Challenges extends StatefulWidget {
 
 class _ChallengesState extends State<Challenges> {
   String? user;
-  
 
   // ------------------------ NUEVOS CAMPOS ------------------------
-  File? _selectedImage;               // Donde guardaremos la foto tomada
+  File? _selectedImage; // Donde guardaremos la foto tomada
   final ImagePicker _picker = ImagePicker(); // Instancia de image_picker
-  final ChatGPTService _chatGptService = ChatGPTService( dotenv.env['KEY_ECOSPHERE']!); // Servicio de ChatGPT
+  final ChatGPTService _chatGptService =
+      ChatGPTService(dotenv.env['KEY_ECOSPHERE']!); // Servicio de ChatGPT
 
   // Controlador para el campo "Type code"
   final TextEditingController _codeController = TextEditingController();
+  final ChallengesRepository _challengesRepository = ChallengesRepository();
   // --------------------------------------------------------------
 
   @override
@@ -85,7 +86,8 @@ class _ChallengesState extends State<Challenges> {
           width: double.infinity,
           height: double.infinity,
           child: StreamBuilder(
-            stream: FirebaseFirestore.instance.collection('challenges').snapshots(),
+            stream: Stream.fromFuture(_challengesRepository.getChallenges())
+                .asyncExpand((stream) => stream),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -101,10 +103,8 @@ class _ChallengesState extends State<Challenges> {
                   var challenge = challenges[index];
 
                   return FutureBuilder(
-                    future: FirebaseFirestore.instance
-                        .collection('users-challenges')
-                        .doc('${challenge.id}-$user')
-                        .get(),
+                    future: _challengesRepository.getUsersChallenges(
+                        challenge.id, user),
                     builder: (context, userChallengeSnapshot) {
                       if (!userChallengeSnapshot.hasData) {
                         return const Center(child: CircularProgressIndicator());
@@ -123,7 +123,7 @@ class _ChallengesState extends State<Challenges> {
                         onTap: () {
                           // Reseteamos el estado antes de mostrar el diálogo
                           _resetChallengeState();
-                          
+
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {
@@ -299,34 +299,34 @@ class _ChallengesState extends State<Challenges> {
           valueListenable: _codeController,
           builder: (context, value, child) {
             return value.text.isNotEmpty
-          ? Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD3ECED),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.check_circle,
-                color: Color(0xFF03898C),
-                size: 40,
-              ),
-            )
-          : ElevatedButton(
-              onPressed: () {
-                // LLAMAMOS AL MÉTODO de la cámara
-                _pickImageFromCamera();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEAEAFF),
-              ),
-              child: const Text(
-                'Open Camera',
-                style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.w500,
-                ),
-              ),
-            );
+                ? Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD3ECED),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.check_circle,
+                      color: Color(0xFF03898C),
+                      size: 40,
+                    ),
+                  )
+                : ElevatedButton(
+                    onPressed: () {
+                      // LLAMAMOS AL MÉTODO de la cámara
+                      _pickImageFromCamera();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFEAEAFF),
+                    ),
+                    child: const Text(
+                      'Open Camera',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  );
           },
         ),
         const SizedBox(height: 20),
@@ -357,17 +357,11 @@ class _ChallengesState extends State<Challenges> {
             if (_codeController.text.isNotEmpty) {
               setState(() {
                 // EJEMPLO: Si code == "123456", completamos el reto en Firestore
-                if (_codeController.text == "123456" && user != null ) {
-                  final docRef = FirebaseFirestore.instance
-                      .collection('users-challenges')
-                      .doc('${challenge.id}-$user');
-                  
-                  docRef.set({
-                    'completed': true,
-                    'progress': 1.0,
-                  }, SetOptions(merge: true));
+                if (_codeController.text == "123456" && user != null) {
+                  _challengesRepository.setCompletedChallenge(
+                      challenge.id, user);
                 }
-                
+
                 // Reseteamos el estado antes de cerrar
                 _resetChallengeState();
                 Navigator.of(context).pop();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Importa los widgets UpvoteButton y CommentsButton
+import '../../repositories/posts_repository.dart';
 import 'upvote_button.dart';
 import 'comments_button.dart';
 
@@ -25,20 +26,14 @@ class _HomeState extends State<Home> {
 
   // Búsqueda local
   String _searchQuery = '';
+  final PostsRepository repository = PostsRepository();
 
   @override
   Widget build(BuildContext context) {
     // Determina el stream de posts según el chip seleccionado
     final postsStream = (_selectedChip != null)
-        ? FirebaseFirestore.instance
-            .collection('posts')
-            .where('tags', arrayContains: _selectedChip)
-            .orderBy('upvotes', descending: true)
-            .snapshots()
-        : FirebaseFirestore.instance
-            .collection('posts')
-            .orderBy('upvotes', descending: true)
-            .snapshots();
+        ? repository.getFilteredPosts(_selectedChip!)
+        : repository.getPosts();
 
     return Scaffold(
       appBar: AppBar(
@@ -131,7 +126,9 @@ class _HomeState extends State<Home> {
               // LISTA DE POSTS
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
-                  stream: postsStream,
+                  stream: Future.value(postsStream)
+                      .asStream()
+                      .asyncExpand((stream) => stream),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return Center(child: Text('Error: ${snapshot.error}'));
