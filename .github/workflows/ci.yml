@@ -18,6 +18,9 @@ jobs:
         with:
           flutter-version: 3.7.0
 
+      - name: Set up repository variables
+        run: echo "REPO_VAR=${{ vars.KEY_ECOSPHERE }}" >> flutter_app/.env
+
       - name: upgrade flutter
         run: flutter upgrade
 
