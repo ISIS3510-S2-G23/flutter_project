@@ -162,7 +162,7 @@ class _AddPostState extends State<AddPost> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.755,
+                        height: MediaQuery.of(context).size.height * 0.77,
                         child: Column(
                           children: [
                             Align(
@@ -204,7 +204,7 @@ class _AddPostState extends State<AddPost> {
                                       hintStyle: TextStyle(color: Colors.grey),
                                       border: InputBorder.none,
                                     ),
-                                    maxLines: 13,
+                                    maxLines: 11,
                                     keyboardType: TextInputType.multiline,
                                   ),
                                 ],
