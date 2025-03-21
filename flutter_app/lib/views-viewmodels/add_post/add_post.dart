@@ -89,9 +89,17 @@ class _AddPostState extends State<AddPost> {
     return null;
   }
 
-  Future<void> _uploadToFirebase() async {
-    String title = _titleTextController.text;
-    String text = _textController.text;
+  Future<bool> _uploadToFirebase() async {
+    String title = _titleTextController.text.trim();
+    String text = _textController.text.trim();
+
+    if (title.isEmpty || text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Title/text cannot be empty')),
+      );
+      return false;
+    }
+
     List<String> comments = [];
     List<String> tags = _tagsController.text
         .split(',')
@@ -106,12 +114,12 @@ class _AddPostState extends State<AddPost> {
         Exception("User not found in SharedPreferences"),
         null,
       );
-      return;
+      return false;
     }
 
     if (_selectedImage == null) {
       await repository.uploadPosts(title, text, tags, user, comments);
-      return;
+      return true;
     }
 
     String? imageUrl = await _uploadImageToCloudinary(_selectedImage!);
@@ -127,7 +135,9 @@ class _AddPostState extends State<AddPost> {
         'timestamp': FieldValue.serverTimestamp(),
         'asset': imageUrl,
       });
+      return true;
     }
+    return false;
   }
 
   @override
@@ -343,8 +353,10 @@ class _AddPostState extends State<AddPost> {
                             SizedBox(height: 4.5),
                             ElevatedButton(
                                 onPressed: () async {
-                                  await _uploadToFirebase();
-                                  Navigator.pushNamed(context, '/index');
+                                  bool success = await _uploadToFirebase();
+                                  if (success) {
+                                    Navigator.pushNamed(context, '/index');
+                                  }
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Color(0xFFA8DADC),
