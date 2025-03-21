@@ -8,11 +8,11 @@ class UpvoteButton extends StatefulWidget {
   final List upvotedBy;
 
   const UpvoteButton({
-    Key? key,
+    super.key,
     required this.postId,
     required this.upvotes,
     required this.upvotedBy,
-  }) : super(key: key);
+  });
 
   @override
   State<UpvoteButton> createState() => _UpvoteButtonState();
