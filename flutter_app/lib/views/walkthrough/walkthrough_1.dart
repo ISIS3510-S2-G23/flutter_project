@@ -21,7 +21,7 @@ class Walkthrough1 extends StatelessWidget {
                 ),
                 SizedBox(height: 30),
                 Text(
-                  'Welcome to EcoShpere!',
+                  'Welcome to EcoSphere!',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontWeight: FontWeight.w600, // Semibold

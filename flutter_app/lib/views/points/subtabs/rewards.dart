@@ -111,6 +111,16 @@ class _RewardsState extends State<Rewards> {
                                           ),
                                           SizedBox(height: 10),
                                           Text(
+                                            'You can claim your reward',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Color(0xFF49447E),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          SizedBox(height: 10),
+                                          Text(
                                             challenge['title'],
                                             style: TextStyle(
                                               fontSize: 14,
@@ -143,12 +153,6 @@ class _RewardsState extends State<Rewards> {
                                       Column(
                                         children: [
                                           Container(
-                                            decoration: BoxDecoration(
-                                              color: Color(0xFFEAEAFF),
-                                              shape: BoxShape.rectangle,
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
                                             child: Padding(
                                               padding:
                                                   const EdgeInsets.all(12.0),
@@ -162,11 +166,22 @@ class _RewardsState extends State<Rewards> {
                                           SizedBox(height: 10),
                                           Text(
                                             'You haven’t completed this challenge',
+                                            textAlign: TextAlign.center,
                                             style: TextStyle(
                                               fontSize: 16,
                                               color: Color(0xFF49447E),
                                               fontWeight: FontWeight.w500,
                                             ),
+                                          ),
+                                          SizedBox(height: 10),
+                                          Text(
+                                            'Go to challenges in points and complete this challenge to claim your reward',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Color(0xFF858597),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            textAlign: TextAlign.center,
                                           ),
                                           SizedBox(height: 10),
                                           ElevatedButton(

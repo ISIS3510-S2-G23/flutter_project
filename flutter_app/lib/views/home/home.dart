@@ -6,7 +6,6 @@ import 'upvote_button.dart';
 import 'comments_button.dart';
 
 // Si usas librerías de Cloudinary, las importas aquí
-import 'package:cloudinary_url_gen/transformation/effect/effect.dart';
 import 'package:cloudinary_url_gen/transformation/resize/resize.dart';
 import 'package:cloudinary_url_gen/transformation/transformation.dart';
 import 'package:cloudinary_flutter/image/cld_image.dart';
@@ -19,7 +18,6 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  
   final TextEditingController _searchController = TextEditingController();
 
   // Filtro de chips; si es null se muestran todos los posts
@@ -27,7 +25,6 @@ class _HomeState extends State<Home> {
 
   // Búsqueda local
   String _searchQuery = '';
-
 
   @override
   Widget build(BuildContext context) {
@@ -337,7 +334,7 @@ class _HomeState extends State<Home> {
 
             // Imagen Cloudinary (si asset no está vacío)
             if (asset.isNotEmpty) ...[
-              Container(
+              SizedBox(
                 width: double.infinity,
                 height: 350,
                 child: CldImageWidget(
