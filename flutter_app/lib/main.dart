@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -18,7 +17,9 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    print("Firebase inicializado correctamente");
+    if (kDebugMode) {
+      print("Firebase inicializado correctamente");
+    }
 
     // Probar conexión con Firebase Auth
     await testFirebaseAuthConnection();
@@ -26,7 +27,9 @@ Future<void> main() async {
     // Solicitar permisos de ubicación
     await requestLocationPermission();
   } catch (e) {
-    print("Error al inicializar Firebase: $e");
+    if (kDebugMode) {
+      print("Error al inicializar Firebase: $e");
+    }
   }
 
   await dotenv.load(fileName: '.env');
@@ -57,9 +60,13 @@ Future<void> main() async {
 Future<void> testFirebaseAuthConnection() async {
   try {
     await FirebaseAuth.instance.signInAnonymously();
-    print("Firebase Auth funciona correctamente.");
+    if (kDebugMode) {
+      print("Firebase Auth funciona correctamente.");
+    }
   } catch (e) {
-    print("Error en Firebase Auth: $e");
+    if (kDebugMode) {
+      print("Error en Firebase Auth: $e");
+    }
   }
 }
 
@@ -70,9 +77,13 @@ Future<void> requestLocationPermission() async {
     permission = await Geolocator.requestPermission();
   }
   if (permission == LocationPermission.deniedForever) {
-    print("Los permisos de ubicación están denegados permanentemente.");
+    if (kDebugMode) {
+      print("Los permisos de ubicación están denegados permanentemente.");
+    }
   } else {
-    print("Permiso de ubicación concedido.");
+    if (kDebugMode) {
+      print("Permiso de ubicación concedido.");
+    }
   }
 }
 

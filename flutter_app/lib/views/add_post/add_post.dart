@@ -162,7 +162,7 @@ class _AddPostState extends State<AddPost> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       SizedBox(
-                        height: MediaQuery.of(context).size.height * 0.755,
+                        height: MediaQuery.of(context).size.height * 0.77,
                         child: Column(
                           children: [
                             Align(
@@ -204,7 +204,7 @@ class _AddPostState extends State<AddPost> {
                                       hintStyle: TextStyle(color: Colors.grey),
                                       border: InputBorder.none,
                                     ),
-                                    maxLines: 13,
+                                    maxLines: 11,
                                     keyboardType: TextInputType.multiline,
                                   ),
                                 ],
@@ -349,8 +349,7 @@ class _AddPostState extends State<AddPost> {
                                     ],
                                   )
                                 ]),
-                            SizedBox(height: 5),
-                            SizedBox(height: 10),
+                            SizedBox(height: 4.5),
                             ElevatedButton(
                                 onPressed: () async {
                                   await _uploadToFirebase();
@@ -372,7 +371,7 @@ class _AddPostState extends State<AddPost> {
                     ],
                   ),
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pushNamed(context, '/index');

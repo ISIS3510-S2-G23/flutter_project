@@ -50,7 +50,7 @@ class _PointsState extends State<Points> with SingleTickerProviderStateMixin {
                           style: TextStyle(
                             color: Color(0xFF49447E),
                             fontWeight: FontWeight.bold,
-                            fontSize: 22,
+                            fontSize: 20,
                           ),
                         ),
                       ],

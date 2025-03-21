@@ -1,9 +1,13 @@
+// ignore_for_file: unused_field
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 
 class NearMe extends StatefulWidget {
+  const NearMe({super.key});
+
   @override
   _NearMeState createState() => _NearMeState();
 }
@@ -24,12 +28,10 @@ class _NearMeState extends State<NearMe> {
     LocationPermission permission = await Geolocator.requestPermission();
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
-      print("Permisos de ubicación denegados.");
       return;
     }
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
-    print("Ubicación obtenida: ${position.latitude}, ${position.longitude}");
     setState(() {
       _currentPosition = LatLng(position.latitude, position.longitude);
     });

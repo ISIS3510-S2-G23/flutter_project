@@ -8,7 +8,7 @@ void main() {
       MaterialApp(home: Walkthrough1()),
     );
 
-    expect(find.text('Welcome to EcoShpere!'), findsOneWidget);
+    expect(find.text('Welcome to EcoSphere!'), findsOneWidget);
     expect(
         find.text(
             'Discover a new way to recycle, share, and learn about sustainability in your community.'),
