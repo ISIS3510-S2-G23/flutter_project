@@ -349,7 +349,7 @@ class _AddPostState extends State<AddPost> {
                                     ],
                                   )
                                 ]),
-                            SizedBox(height: 5),
+                            SizedBox(height: 4.5),
                             ElevatedButton(
                                 onPressed: () async {
                                   await _uploadToFirebase();
