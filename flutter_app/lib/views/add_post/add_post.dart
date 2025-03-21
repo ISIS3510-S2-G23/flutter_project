@@ -350,7 +350,6 @@ class _AddPostState extends State<AddPost> {
                                   )
                                 ]),
                             SizedBox(height: 5),
-                            SizedBox(height: 10),
                             ElevatedButton(
                                 onPressed: () async {
                                   await _uploadToFirebase();
@@ -372,7 +371,7 @@ class _AddPostState extends State<AddPost> {
                     ],
                   ),
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pushNamed(context, '/index');
