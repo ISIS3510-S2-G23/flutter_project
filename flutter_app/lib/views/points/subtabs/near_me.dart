@@ -58,7 +58,6 @@ class _NearMeState extends State<NearMe> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Recycle Points Near Me")),
       body: _currentPosition == null
           ? Center(child: CircularProgressIndicator())
           : GoogleMap(
