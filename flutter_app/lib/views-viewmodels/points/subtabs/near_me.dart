@@ -1,5 +1,6 @@
 // ignore_for_file: unused_field
 
+import 'package:ecosphere/repositories/locations_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -16,6 +17,7 @@ class _NearMeState extends State<NearMe> {
   GoogleMapController? _mapController;
   LatLng? _currentPosition;
   Set<Marker> _markers = {};
+  final LocationsRepository _locationsRepository = LocationsRepository();
 
   @override
   void initState() {
@@ -38,7 +40,7 @@ class _NearMeState extends State<NearMe> {
   }
 
   Future<void> _fetchRecyclingCenters() async {
-    FirebaseFirestore.instance.collection('locations').get().then((query) {
+    _locationsRepository.getLocations().then((query) {
       Set<Marker> newMarkers = {};
       for (var doc in query.docs) {
         var data = doc.data();

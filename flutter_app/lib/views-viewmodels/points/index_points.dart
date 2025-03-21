@@ -1,6 +1,6 @@
-import 'package:ecosphere/views/points/subtabs/challenges.dart';
-import 'package:ecosphere/views/points/subtabs/near_me.dart';
-import 'package:ecosphere/views/points/subtabs/rewards.dart';
+import 'package:ecosphere/views-viewmodels/points/subtabs/challenges.dart';
+import 'package:ecosphere/views-viewmodels/points/subtabs/near_me.dart';
+import 'package:ecosphere/views-viewmodels/points/subtabs/rewards.dart';
 import 'package:flutter/material.dart';
 
 class Points extends StatefulWidget {

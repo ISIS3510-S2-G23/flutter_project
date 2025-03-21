@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../repositories/posts_repository.dart';
+
 class CommentsButton extends StatelessWidget {
   final String postId;
   // Mapa donde cada clave es un usuario y el valor es el comentario
@@ -60,6 +62,8 @@ class _CommentsDialogState extends State<_CommentsDialog> {
 
   // Variable para guardar el nombre de usuario de SharedPreferences
   String? user;
+
+  var postsRepository = PostsRepository();
 
   @override
   void initState() {
@@ -276,8 +280,8 @@ class _CommentsDialogState extends State<_CommentsDialog> {
     }
 
     try {
-      final docRef =
-          FirebaseFirestore.instance.collection('posts').doc(widget.postId);
+      final docRefFuture = postsRepository.getDocByPostId(widget.postId);
+      final docRef = await docRefFuture;
 
       // Usamos user como parte de la clave
       final uniqueKey = '$user-${DateTime.now().millisecondsSinceEpoch}';
