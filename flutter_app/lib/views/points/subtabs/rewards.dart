@@ -152,15 +152,12 @@ class _RewardsState extends State<Rewards> {
                                     if (!isCompleted)
                                       Column(
                                         children: [
-                                          Container(
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(12.0),
-                                              child: Icon(
-                                                Icons.donut_large,
-                                                color: Color(0xFF49447E),
-                                                size: 100,
-                                              ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(12.0),
+                                            child: Icon(
+                                              Icons.donut_large,
+                                              color: Color(0xFF49447E),
+                                              size: 100,
                                             ),
                                           ),
                                           SizedBox(height: 10),
