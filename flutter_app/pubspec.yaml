@@ -50,6 +50,7 @@ dependencies:
   google_maps_flutter: ^2.2.5
   geolocator: ^9.0.2
   provider: ^6.0.5
+  flutter_dotenv: ^5.2.1
 
 
 dev_dependencies:
@@ -83,6 +84,7 @@ flutter:
     - assets/images/People/WBG/person7.png
     - assets/images/People/WBG/person8.png
     - assets/images/Logos/Google.png
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

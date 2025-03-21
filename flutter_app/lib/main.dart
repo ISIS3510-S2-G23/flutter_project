@@ -8,6 +8,8 @@ import 'package:cloudinary_url_gen/cloudinary.dart';
 import 'package:cloudinary_flutter/cloudinary_context.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +29,12 @@ Future<void> main() async {
     print("Error al inicializar Firebase: $e");
   }
 
+  await dotenv.load(fileName: '.env');
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   FlutterError.onError = (details) {
     FirebaseCrashlytics.instance.recordFlutterError(details);
   };
@@ -39,7 +47,10 @@ Future<void> main() async {
   CloudinaryContext.cloudinary = Cloudinary.fromCloudName(
       cloudName: 'dhrkcqd33', apiKey: '537811732293891');
 
-  runApp(MyApp());
+  // Obtener la API key de ChatGPT
+  final chatGptApiKey = dotenv.env['KEY_ECOSPHERE'] ?? '';
+
+  runApp(MyApp(chatGptApiKey: chatGptApiKey));
 }
 
 /// ✅ **Función para probar conexión con Firebase Authentication**
@@ -52,7 +63,7 @@ Future<void> testFirebaseAuthConnection() async {
   }
 }
 
-/// ✅ **Función para solicitar permisos de ubicación**
+/// **Función para solicitar permisos de ubicación**
 Future<void> requestLocationPermission() async {
   LocationPermission permission = await Geolocator.checkPermission();
   if (permission == LocationPermission.denied) {
@@ -66,7 +77,9 @@ Future<void> requestLocationPermission() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String chatGptApiKey;
+
+  const MyApp({super.key, required this.chatGptApiKey});
 
   @override
   Widget build(BuildContext context) {
