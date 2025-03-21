@@ -43,10 +43,8 @@ class _UpvoteButtonState extends State<UpvoteButton> {
     // si user es null, asumimos que no (no se logueó)
     final hasVoted = user != null && widget.upvotedBy.contains(user);
 
-    // Color del ícono: #1C1B1F si no ha votado, #38F745 si sí lo hizo
-    final iconColor = hasVoted
-        ? const Color(0xFF38F745)
-        : const Color(0xFF1C1B1F); // Opacidad 1.0 (puedes ajustar)
+    final iconColor =
+        hasVoted ? const Color(0xFF00B40C) : const Color(0xFFBBBBBC);
 
     return InkWell(
       onTap: () => _toggleUpvote(context),
@@ -54,7 +52,7 @@ class _UpvoteButtonState extends State<UpvoteButton> {
         children: [
           Icon(
             Icons.arrow_circle_up,
-            size: 20,       // width y height de 20
+            size: 20, // width y height de 20
             color: iconColor,
           ),
           const SizedBox(width: 4),
@@ -62,7 +60,7 @@ class _UpvoteButtonState extends State<UpvoteButton> {
             '${widget.upvotes}',
             style: const TextStyle(
               fontSize: 14,
-              color: Color(0xFF49447E),
+              color: Color(0xFFBBBBBC),
             ),
           ),
         ],
@@ -81,7 +79,8 @@ class _UpvoteButtonState extends State<UpvoteButton> {
     }
 
     try {
-      final docRef = FirebaseFirestore.instance.collection('posts').doc(widget.postId);
+      final docRef =
+          FirebaseFirestore.instance.collection('posts').doc(widget.postId);
 
       if (widget.upvotedBy.contains(user)) {
         // Ya había votado => remover el voto

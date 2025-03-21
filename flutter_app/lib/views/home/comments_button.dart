@@ -20,9 +20,9 @@ class CommentsButton extends StatelessWidget {
       // Al pulsar, abrimos el diálogo centrado
       onTap: () => _showCommentsDialog(context),
       child: Icon(
-        Icons.add_comment,
-        size: 20,              // width: 20; height: 20
-        color: const Color(0xFF1C1B1F),  // siempre #1C1B1F
+        Icons.add_comment_outlined,
+        size: 20, // width: 20; height: 20
+        color: const Color(0xFFBBBBBC),
       ),
     );
   }
@@ -84,13 +84,18 @@ class _CommentsDialogState extends State<_CommentsDialog> {
 
     // Diálogo centrado con ancho ~350 y alto ~420 (para que "Post" se vea mejor)
     return Dialog(
+      elevation: 4,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16), // Bordes redondeados de 16
       ),
       // Ajustamos ancho y alto para que quepa mejor el botón "Post"
       child: Container(
-        width: 350,   // Ajustado a 350
-        height: 420,  // Ajustado a 420
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(16), // Bordes redondeados
+        ),
+        width: 350,
+        height: 500,
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
@@ -110,7 +115,8 @@ class _CommentsDialogState extends State<_CommentsDialog> {
                   : ListView.builder(
                       itemCount: commentsList.length,
                       itemBuilder: (context, index) {
-                        final userKey = commentsList[index]['user'] ?? 'Unknown';
+                        final userKey =
+                            commentsList[index]['user'] ?? 'Unknown';
                         final text = commentsList[index]['text'] ?? '';
                         return _buildCommentCard(userKey, text);
                       },
@@ -124,13 +130,8 @@ class _CommentsDialogState extends State<_CommentsDialog> {
               child: Text(
                 'Type your comment for this post',
                 style: TextStyle(
-                  // font-family: Inter
-                  // font-weight: 500
-                  // font-size: 12
-                  // line-height: 100%
-                  // color #1F1F39
                   fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.bold,
                   color: const Color(0xFF1F1F39),
                   height: 1.0, // line-height: 100%
                 ),
@@ -140,19 +141,20 @@ class _CommentsDialogState extends State<_CommentsDialog> {
 
             // Caja de texto (279x63, borderRadius=10)
             Container(
-              width: 279,
+              width: 310,
               height: 63,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
-                color: Colors.grey.shade100,
+                color: Colors.white,
               ),
               child: TextField(
                 controller: _commentController,
                 maxLines: null,
                 style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: 'Add a comment... :)',
-                  hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                  hintText: 'Add a comment here',
+                  hintStyle:
+                      TextStyle(color: Colors.grey.shade500, fontSize: 12),
                   contentPadding: const EdgeInsets.all(8),
                   border: InputBorder.none,
                 ),
@@ -162,8 +164,8 @@ class _CommentsDialogState extends State<_CommentsDialog> {
 
             // Botón "Post"
             SizedBox(
-              width: 100,  // Aumentamos de 88 a 100 px
-              height: 28,  // Aumentamos de 25 a 28 px
+              width: 100, // Aumentamos de 88 a 100 px
+              height: 28, // Aumentamos de 25 a 28 px
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF49447E),
@@ -207,6 +209,7 @@ class _CommentsDialogState extends State<_CommentsDialog> {
   // Card de cada comentario
   Widget _buildCommentCard(String user, String text) {
     return Card(
+      color: Colors.white,
       margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -217,25 +220,34 @@ class _CommentsDialogState extends State<_CommentsDialog> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Icono de persona
-            const Icon(
-              Icons.person,
-              size: 16,
-              color: Color(0xFF49447E),
-            ),
-            const SizedBox(width: 6),
             // Usuario y texto
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    user,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF49447E),
-                      fontWeight: FontWeight.w600,
-                    ),
+                  Row(
+                    children: [
+                      // Icono de usuario
+                      const Icon(
+                        Icons.person,
+                        size: 16,
+                        color: Color(0xFFB8B8D2),
+                      ),
+                      SizedBox(width: 4),
+                      // Nombre de usuario
+                      Text(
+                        user.contains('-')
+                            ? user
+                                .split('-')
+                                .sublist(0, user.split('-').length - 1)
+                                .join('-')
+                            : user,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFFB8B8D2),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -265,7 +277,8 @@ class _CommentsDialogState extends State<_CommentsDialog> {
     }
 
     try {
-      final docRef = FirebaseFirestore.instance.collection('posts').doc(widget.postId);
+      final docRef =
+          FirebaseFirestore.instance.collection('posts').doc(widget.postId);
 
       // Usamos user como parte de la clave
       final uniqueKey = '$user-${DateTime.now().millisecondsSinceEpoch}';
