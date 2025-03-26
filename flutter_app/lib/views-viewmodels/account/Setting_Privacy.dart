@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import 'package:ecosphere/views-viewmodels/account/Policy_TermsOfService/PrivacyPolicy.dart';
+import 'package:ecosphere/views-viewmodels/account/Policy_TermsOfService/TermsOfService.dart';
+
 class Settings extends StatefulWidget {
   const Settings({Key? key}) : super(key: key);
 
@@ -199,6 +202,12 @@ class _SettingsState extends State<Settings> {
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
                       // Navegar a la página de política de privacidad
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PrivacyPolicy(),
+                        ),
+                      );
                     },
                   ),
                   ListTile(
@@ -207,6 +216,12 @@ class _SettingsState extends State<Settings> {
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
                       // Navegar a la página de términos de servicio
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const TermsOfService(),
+                        ),
+                      );
                     },
                   ),
                   const SizedBox(height: 40),
