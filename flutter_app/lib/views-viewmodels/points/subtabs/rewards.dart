@@ -90,9 +90,7 @@ class _RewardsState extends State<Rewards> {
                                         },
                                       ),
                                     ),
-                                    if (isCompleted &&
-                                        challenge['description'] ==
-                                            'Completed challenge!')
+                                    if (isCompleted)
                                       Column(
                                         children: [
                                           Icon(
