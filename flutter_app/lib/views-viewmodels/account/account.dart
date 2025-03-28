@@ -24,46 +24,6 @@ class Account extends StatelessWidget {
     );
   }
 
-  Future<void> _logout(BuildContext context) async {
-    try {
-      // Mostrar diálogo de confirmación
-      bool? confirmLogout = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Log Out'),
-          content: const Text('Are you sure you want to log out?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Log Out'),
-            ),
-          ],
-        ),
-      );
-      
-      // Si el usuario confirma, proceder con el logout
-      if (confirmLogout == true) {
-        // Limpiar SharedPreferences
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.clear();
-        
-        // Cerrar sesión en Firebase
-        await FirebaseAuth.instance.signOut();
-        
-        // Navegar a la pantalla de login
-        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-      }
-    } catch (e) {
-      // Manejar errores
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error logging out: $e')),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -137,9 +97,11 @@ class Account extends StatelessWidget {
 
               _buildOption(
                 'Log Out',
-                () async {
+                () {
                   // Llamar a la función de logout
-                  await _logout(context);
+                  // await _logout(context);
+                  Navigator.pushNamed(context, '/logout');
+
                 },
               ),
 

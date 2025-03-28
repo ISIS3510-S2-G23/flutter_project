@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LogoutScreen extends StatelessWidget {
-  const LogoutScreen({Key? key}) : super(key: key);
+  const LogoutScreen({super.key});
 
   Future<void> _logout(BuildContext context) async {
     try {
@@ -71,7 +71,7 @@ class LogoutScreen extends StatelessWidget {
                 'Log Out',
                 style: TextStyle(
                   fontFamily: 'Poppins',
-                  color: Color(0xFF1F1F39),
+                  color: Color(0xFF49447E),
                   fontWeight: FontWeight.w600,
                   fontSize: 22,
                 ),
@@ -103,6 +103,8 @@ class LogoutScreen extends StatelessWidget {
                     child: const Text(
                       'Cancel',
                       style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 16,
                         color: Color(0xFF49447E),
                         fontWeight: FontWeight.w500,
                       ),
@@ -121,7 +123,10 @@ class LogoutScreen extends StatelessWidget {
                     child: const Text(
                       'Log Out',
                       style: TextStyle(
-                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Poppins',
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500
                       ),
                     ),
                   ),
