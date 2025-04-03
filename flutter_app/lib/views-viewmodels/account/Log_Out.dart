@@ -55,12 +55,12 @@ class LogoutScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF1F0),
+                  color: const Color(0xFF49447E),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.exit_to_app,
-                  color: Color(0xFFFF4B4B),
+                  color: Color.fromARGB(255, 255, 255, 255),
                   size: 48,
                 ),
               ),
