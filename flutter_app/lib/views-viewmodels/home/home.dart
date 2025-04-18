@@ -32,8 +32,11 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     // Determina el stream de posts según el chip seleccionado
     final postsStream = (_selectedChip != null)
-        ? repository.getFilteredPosts(_selectedChip!)
-        : repository.getPosts();
+        ? FirebaseFirestore.instance
+            .collection('posts')
+            .where('tags', arrayContains: _selectedChip)
+            .snapshots()
+        : FirebaseFirestore.instance.collection('posts').snapshots();
 
     return Scaffold(
       appBar: AppBar(
@@ -126,9 +129,7 @@ class _HomeState extends State<Home> {
               // LISTA DE POSTS
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
-                  stream: Future.value(postsStream)
-                      .asStream()
-                      .asyncExpand((stream) => stream),
+                  stream: postsStream,
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return Center(child: Text('Error: ${snapshot.error}'));

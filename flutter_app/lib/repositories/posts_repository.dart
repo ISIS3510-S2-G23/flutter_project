@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:hive/hive.dart';
 
 class PostsRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -14,25 +16,76 @@ class PostsRepository {
     }
   }
 
-  Future<Stream<QuerySnapshot<Map<String, dynamic>>>> getPosts() async {
+  Future<bool> hasInternetConnection() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    return connectivityResult == ConnectivityResult.mobile ||
+        connectivityResult == ConnectivityResult.wifi;
+  }
+
+  Future<List<Map<String, dynamic>>> getPosts() async {
     try {
-      return FirebaseFirestore.instance
-          .collection('posts')
-          .orderBy('upvotes', descending: true)
-          .snapshots();
+      bool isConnected = await hasInternetConnection();
+
+      if (isConnected) {
+        QuerySnapshot<Map<String, dynamic>> querySnapshot = await _firestore
+            .collection('posts')
+            .orderBy('upvotes', descending: true)
+            .get();
+
+        List<Map<String, dynamic>> posts = querySnapshot.docs
+            .map((doc) => {'id': doc.id, ...doc.data()})
+            .toList();
+
+        var box = Hive.box('posts');
+        await box.put('cachedPosts', posts);
+
+        return posts;
+      } else {
+        var box = Hive.box('posts');
+        List<dynamic>? cachedPosts = box.get('cachedPosts');
+
+        if (cachedPosts != null) {
+          return List<Map<String, dynamic>>.from(cachedPosts);
+        } else {
+          throw Exception('No hay conexión y no hay datos en caché.');
+        }
+      }
     } catch (e) {
       rethrow;
     }
   }
 
-  Future<Stream<QuerySnapshot<Map<String, dynamic>>>> getFilteredPosts(
+  Future<List<Map<String, dynamic>>> getFilteredPosts(
       String selectedChip) async {
     try {
-      return FirebaseFirestore.instance
-          .collection('posts')
-          .where('tags', arrayContains: selectedChip)
-          .orderBy('upvotes', descending: true)
-          .snapshots();
+      bool isConnected = await hasInternetConnection();
+
+      if (isConnected) {
+        QuerySnapshot<Map<String, dynamic>> querySnapshot = await _firestore
+            .collection('posts')
+            .where('tags', arrayContains: selectedChip)
+            .orderBy('upvotes', descending: true)
+            .get();
+
+        List<Map<String, dynamic>> posts = querySnapshot.docs
+            .map((doc) => {'id': doc.id, ...doc.data()})
+            .toList();
+
+        var box = Hive.box('posts');
+        await box.put('cachedFilteredPosts-$selectedChip', posts);
+
+        return posts;
+      } else {
+        var box = Hive.box('posts');
+        List<dynamic>? cachedPosts =
+            box.get('cachedFilteredPosts-$selectedChip');
+
+        if (cachedPosts != null) {
+          return List<Map<String, dynamic>>.from(cachedPosts);
+        } else {
+          throw Exception('No hay conexión y no hay datos en caché.');
+        }
+      }
     } catch (e) {
       rethrow;
     }
