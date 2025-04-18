@@ -1,4 +1,4 @@
-
+import 'package:ecosphere/main.dart';
 import 'package:ecosphere/views-viewmodels/index_view.dart';
 import 'package:flutter/material.dart';
 import '../views-viewmodels/add_post/add_post.dart';
@@ -16,7 +16,8 @@ import 'package:ecosphere/views-viewmodels/account/Log_Out.dart';
 
 class Routes {
   static final Map<String, WidgetBuilder> routes = {
-    '/': (context) => Walkthrough1(),
+    '/': (context) => SplashScreen(),
+    '/walkthrough1': (context) => Walkthrough1(),
     '/walkthrough2': (context) => Walkthrough2(),
     '/walkthrough3': (context) => Walkthrough3(),
     '/login': (context) => Login(),

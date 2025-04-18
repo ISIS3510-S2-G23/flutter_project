@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Account extends StatelessWidget {
-  const Account({Key? key}) : super(key: key);
+  const Account({super.key});
 
   // Método para construir cada opción (Edit Account, Settings, Help)
   Widget _buildOption(String label, VoidCallback onTap) {
@@ -24,7 +22,6 @@ class Account extends StatelessWidget {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,7 +41,7 @@ class Account extends StatelessWidget {
             children: [
               // Espacio en la parte superior para colocar el título en la posición correcta
               const SizedBox(height: 51.25),
-              
+
               // Título "Account" posicionado según especificaciones de Figma
               const SizedBox(
                 width: 105,
@@ -61,7 +58,7 @@ class Account extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               // Imagen centrada
               const SizedBox(height: 20),
               Center(
@@ -101,7 +98,6 @@ class Account extends StatelessWidget {
                   // Llamar a la función de logout
                   // await _logout(context);
                   Navigator.pushNamed(context, '/logout');
-
                 },
               ),
 

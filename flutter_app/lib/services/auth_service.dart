@@ -85,6 +85,7 @@ class AuthService {
         await prefs.setString('username', username);
 
         Navigator.pushReplacementNamed(context, '/index');
+        await prefs.setBool('isLoggedIn', true);
       } else {
         throw Exception('User not found');
       }
@@ -114,6 +115,8 @@ class AuthService {
   Future<void> signout({required BuildContext context}) async {
     await FirebaseAuth.instance.signOut();
     await Future.delayed(const Duration(seconds: 1));
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isLoggedIn', false);
     Navigator.pushReplacementNamed(context, '/login');
   }
 
