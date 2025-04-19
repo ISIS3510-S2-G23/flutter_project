@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,16 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
+  late final SharedPreferences prefs;
+
+  AuthService() {
+    _initializePrefs();
+  }
+
+  Future<void> _initializePrefs() async {
+    prefs = await SharedPreferences.getInstance();
+  }
+
   Future<void> signup(
       {required String username,
       required String email,
@@ -28,7 +39,6 @@ class AuthService {
         'email': email,
       });
 
-      SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('username', username);
 
       Navigator.pushReplacementNamed(context, '/signup-success');
@@ -55,38 +65,62 @@ class AuthService {
     }
   }
 
-  Future<void> login(
-      {required String email,
-      required String password,
-      required BuildContext context}) async {
+  Future<void> login({
+    required String email,
+    required String password,
+    required BuildContext context,
+  }) async {
     try {
-      // ignore: unused_local_variable
-      UserCredential userCredential =
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      var connectivityResult = await Connectivity().checkConnectivity();
+      bool isConnected = connectivityResult == ConnectivityResult.mobile ||
+          connectivityResult == ConnectivityResult.wifi;
 
-      QuerySnapshot querySnapshot =
-          await FirebaseFirestore.instance.collection('users').get();
+      if (isConnected) {
+        // ignore: unused_local_variable
+        UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
 
-      DocumentSnapshot? userDoc;
-      for (var doc in querySnapshot.docs) {
-        if (doc['email'] == email) {
-          userDoc = doc;
-          break;
+        QuerySnapshot querySnapshot =
+            await FirebaseFirestore.instance.collection('users').get();
+
+        await prefs.setString('email', email);
+        await prefs.setString('password', password);
+
+        DocumentSnapshot? userDoc;
+        for (var doc in querySnapshot.docs) {
+          if (doc['email'] == email) {
+            userDoc = doc;
+            break;
+          }
         }
-      }
 
-      if (userDoc != null) {
-        String username = userDoc.get('username');
+        if (userDoc != null) {
+          String username = userDoc.get('username');
 
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('username', username);
+          await prefs.setString('username', username);
+          await prefs.setBool('isLoggedIn', true);
 
-        Navigator.pushReplacementNamed(context, '/index');
+          Navigator.pushReplacementNamed(context, '/index');
+        } else {
+          throw Exception('User not found');
+        }
       } else {
-        throw Exception('User not found');
+        String? storedEmail = prefs.getString('email');
+        String? storedPassword = prefs.getString('password');
+
+        if (storedEmail == email && storedPassword == password) {
+          if (storedEmail != null) {
+            Navigator.pushReplacementNamed(context, '/index');
+          } else {
+            throw Exception('No cached user data found.');
+          }
+        } else {
+          throw Exception(
+              'No internet connection and no cached credentials match.');
+        }
       }
     } on FirebaseAuthException catch (e) {
       String message = 'Something went wrong';
@@ -114,6 +148,7 @@ class AuthService {
   Future<void> signout({required BuildContext context}) async {
     await FirebaseAuth.instance.signOut();
     await Future.delayed(const Duration(seconds: 1));
+    await prefs.setBool('isLoggedIn', false);
     Navigator.pushReplacementNamed(context, '/login');
   }
 
@@ -135,7 +170,6 @@ class AuthService {
 
       String? username = userCredential.user?.displayName;
 
-      SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('username', username ?? '');
 
       Navigator.pushReplacementNamed(context, '/index');

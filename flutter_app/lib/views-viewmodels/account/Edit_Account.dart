@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 class EditAccount extends StatefulWidget {
-  const EditAccount({Key? key}) : super(key: key);
+  const EditAccount({super.key});
 
   @override
   State<EditAccount> createState() => _EditAccountState();
@@ -18,32 +18,34 @@ class _EditAccountState extends State<EditAccount> {
   final TextEditingController _emailController = TextEditingController();
   File? _selectedImage;
   bool _isLoading = false;
-  
+
   @override
   void initState() {
     super.initState();
     _loadUserData();
   }
-  
+
   Future<void> _loadUserData() async {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       User? currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
         _emailController.text = currentUser.email ?? '';
-        
+
         // Obtener datos de Firestore
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc('user-${currentUser.email}')
             .get();
-        
+
         if (userDoc.exists) {
-          Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-          _usernameController.text = userData['username'] ?? currentUser.displayName ?? '';
+          Map<String, dynamic> userData =
+              userDoc.data() as Map<String, dynamic>;
+          _usernameController.text =
+              userData['username'] ?? currentUser.displayName ?? '';
         } else {
           _usernameController.text = currentUser.displayName ?? '';
         }
@@ -59,35 +61,35 @@ class _EditAccountState extends State<EditAccount> {
       });
     }
   }
-  
+
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    
+
     if (image != null) {
       setState(() {
         _selectedImage = File(image.path);
       });
     }
   }
-  
+
   Future<void> _updateProfile() async {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       User? currentUser = FirebaseAuth.instance.currentUser;
-      
+
       if (currentUser == null) {
         throw Exception('No user is currently signed in');
       }
-      
+
       String email = currentUser.email ?? '';
-      
+
       // Actualizar displayName en Firebase Auth
       await currentUser.updateDisplayName(_usernameController.text);
-      
+
       // Actualizar datos en Firestore
       await FirebaseFirestore.instance
           .collection('users')
@@ -95,20 +97,19 @@ class _EditAccountState extends State<EditAccount> {
           .update({
         'username': _usernameController.text,
       });
-      
+
       // Actualizar SharedPreferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('username', _usernameController.text);
-      
+
       // Mostrar toast de éxito
       Fluttertoast.showToast(
         msg: 'Profile updated successfully',
         backgroundColor: Colors.green,
       );
-      
+
       // Volver a la pantalla anterior
       Navigator.pop(context);
-      
     } catch (e) {
       Fluttertoast.showToast(
         msg: 'Error updating profile: $e',
@@ -120,7 +121,7 @@ class _EditAccountState extends State<EditAccount> {
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -143,7 +144,8 @@ class _EditAccountState extends State<EditAccount> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF49447E)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF49447E)))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -158,7 +160,8 @@ class _EditAccountState extends State<EditAccount> {
                           radius: 50,
                           backgroundImage: _selectedImage != null
                               ? FileImage(_selectedImage!) as ImageProvider
-                              : const AssetImage('assets/images/People/WBG/person8.png'),
+                              : const AssetImage(
+                                  'assets/images/People/WBG/person8.png'),
                         ),
                         Positioned(
                           bottom: 0,
@@ -180,7 +183,7 @@ class _EditAccountState extends State<EditAccount> {
                     ),
                   ),
                   const SizedBox(height: 30),
-                  
+
                   // Campos de formulario
                   TextField(
                     controller: _usernameController,
@@ -200,7 +203,7 @@ class _EditAccountState extends State<EditAccount> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   TextField(
                     controller: _emailController,
                     enabled: false, // El email no se puede editar
@@ -220,7 +223,7 @@ class _EditAccountState extends State<EditAccount> {
                     ),
                   ),
                   const SizedBox(height: 40),
-                  
+
                   // Botón de guardar
                   SizedBox(
                     width: double.infinity,

@@ -9,6 +9,7 @@ import 'package:cloudinary_flutter/cloudinary_context.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +18,10 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+
+    await Hive.initFlutter();
+    await Hive.openBox('posts');
+
     if (kDebugMode) {
       print("Firebase inicializado correctamente");
     }

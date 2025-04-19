@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Help extends StatelessWidget {
-  const Help({Key? key}) : super(key: key);
+  const Help({super.key});
 
   Future<void> _launchUrl(String url) async {
     final Uri uri = Uri.parse(url);
@@ -105,17 +105,14 @@ class Help extends StatelessWidget {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF49447E),
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: const Text(
-                            'Contact Support', 
-                            style: TextStyle(
-                              color: Colors.white
-                              )
-                            ),
+                          child: const Text('Contact Support',
+                              style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
@@ -124,7 +121,7 @@ class Help extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-            
+
             // Sección de FAQ
             const Text(
               'Frequently Asked Questions',
@@ -136,7 +133,7 @@ class Help extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Lista de preguntas frecuentes
             _buildFaqItem(
               'How do I earn points?',
@@ -158,9 +155,9 @@ class Help extends StatelessWidget {
               'Your environmental impact is displayed on your profile dashboard. It shows metrics like CO2 saved, waste recycled, and your overall contribution ranking.',
               context,
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Sección de Tutoriales
             const Text(
               'Tutorials & Resources',
@@ -172,11 +169,12 @@ class Help extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Lista de tutoriales
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.play_circle_outline, color: Color(0xFF49447E)),
+              leading: const Icon(Icons.play_circle_outline,
+                  color: Color(0xFF49447E)),
               title: const Text('Getting Started Guide'),
               onTap: () {
                 // Navegar al tutorial
@@ -184,7 +182,8 @@ class Help extends StatelessWidget {
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.play_circle_outline, color: Color(0xFF49447E)),
+              leading: const Icon(Icons.play_circle_outline,
+                  color: Color(0xFF49447E)),
               title: const Text('How to Complete Challenges'),
               onTap: () {
                 // Navegar al tutorial
@@ -192,7 +191,8 @@ class Help extends StatelessWidget {
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.article_outlined, color: Color(0xFF49447E)),
+              leading:
+                  const Icon(Icons.article_outlined, color: Color(0xFF49447E)),
               title: const Text('Recycling Best Practices'),
               onTap: () {
                 // Navegar al artículo
