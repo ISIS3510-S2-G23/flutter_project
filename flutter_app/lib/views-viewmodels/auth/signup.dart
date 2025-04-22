@@ -75,6 +75,7 @@ class _SignupState extends State<Signup> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   TextFormField(
+                    maxLength: 30,  // Limit username length to 30 characters,
                     decoration: InputDecoration(
                       labelText: 'Your email',
                       border: OutlineInputBorder(
@@ -90,6 +91,9 @@ class _SignupState extends State<Signup> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
                       }
+                      if (value.length > 30) {
+                        return 'Email cannot be longer than 30 characters';
+                      }
                       if (!value.contains(RegExp(
                         r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
                       ))) {
@@ -103,6 +107,7 @@ class _SignupState extends State<Signup> {
                   ),
                   SizedBox(height: 20),
                   TextFormField(
+                    maxLength: 10,  // Limit username length to 10 characters,
                     decoration: InputDecoration(
                       labelText: 'Your username',
                       border: OutlineInputBorder(
@@ -118,6 +123,9 @@ class _SignupState extends State<Signup> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter a username';
                       }
+                      if (value.length > 10) {
+                        return 'Username cannot be longer than 10 characters';
+                      }
                       return null;
                     },
                     onSaved: (value) {
@@ -126,6 +134,7 @@ class _SignupState extends State<Signup> {
                   ),
                   SizedBox(height: 20),
                   TextFormField(
+                    maxLength: 12,  // Limit password length to 12 characters,
                     decoration: InputDecoration(
                       labelText: 'Password',
                       border: OutlineInputBorder(
@@ -160,6 +169,12 @@ class _SignupState extends State<Signup> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your password';
                       }
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters';
+                      }
+                      if (value.length > 12) {
+                        return 'Password cannot be longer than 12 characters';
+                      }
                       return null;
                     },
                     onSaved: (value) {
@@ -168,6 +183,7 @@ class _SignupState extends State<Signup> {
                   ),
                   SizedBox(height: 20),
                   TextFormField(
+                      maxLength: 12,  // Limit password length to 12 characters,
                       decoration: InputDecoration(
                         labelText: 'Confirm your password',
                         border: OutlineInputBorder(
@@ -196,6 +212,12 @@ class _SignupState extends State<Signup> {
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter again your password';
+                        }
+                        if (value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        if (value.length > 12) {
+                          return 'Password cannot be longer than 12 characters';
                         }
                         if (value != _password) {
                           return 'Please make sure passwords are identical';

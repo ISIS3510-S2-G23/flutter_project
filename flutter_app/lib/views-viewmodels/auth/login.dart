@@ -88,6 +88,7 @@ class _LoginState extends State<Login> {
                       children: <Widget>[
                         TextFormField(
                           key: Key('emailField'),
+                          maxLength: 30, // Limitar a 30 caracteres
                           decoration: InputDecoration(
                             labelText: 'Your email',
                             border: OutlineInputBorder(
@@ -112,6 +113,7 @@ class _LoginState extends State<Login> {
                         SizedBox(height: 30),
                         TextFormField(
                           key: Key('passwordField'),
+                          maxLength: 12, // Limitar a 12 caracteres,
                           decoration: InputDecoration(
                             labelText: 'Your password',
                             border: OutlineInputBorder(
@@ -140,6 +142,12 @@ class _LoginState extends State<Login> {
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please enter your password';
+                            }
+                            if (value.length < 6) {
+                              return 'Password must be at least 6 characters';
+                            }
+                            if (value.length > 12) {
+                              return 'Password cannot be longer than 12 characters';
                             }
                             return null;
                           },

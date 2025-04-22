@@ -93,10 +93,10 @@ class ChatGPTService {
             Fluttertoast.showToast(
                 msg: 'The image does not meet the requirements.',
                 toastLength: Toast.LENGTH_LONG,
-                gravity: ToastGravity.TOP_RIGHT,
-                backgroundColor: Color(0xFFDCA8A8),
+                gravity: ToastGravity.CENTER,
+                backgroundColor: Color.fromARGB(255, 21, 152, 185),
                 textColor: Colors.white,
-                timeInSecForIosWeb: 1,
+                timeInSecForIosWeb: 10,
                 fontSize: 14.0);
             return null;
           }
