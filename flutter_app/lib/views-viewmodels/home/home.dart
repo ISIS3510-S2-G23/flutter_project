@@ -355,6 +355,7 @@
 //   }
 // }
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
@@ -388,9 +389,46 @@ class _HomeState extends State<Home> {
   final TextEditingController _searchController = TextEditingController();
   String? _selectedChip;
   String _searchQuery = '';
-  
+
   // Instancia del repositorio
   final PostsRepository _postsRepository = PostsRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    _sendTagCountsToFirebase();
+  }
+
+  Future<void> _sendTagCountsToFirebase() async {
+    try {
+      final querySnapshot =
+          await FirebaseFirestore.instance.collection('posts').get();
+
+      final Map<String, int> tagCounts = {};
+
+      for (var doc in querySnapshot.docs) {
+        final data = doc.data();
+        if (data['tags'] is List) {
+          for (var tag in data['tags']) {
+            tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
+          }
+        }
+      }
+
+      await FirebaseFirestore.instance
+          .collection('tagCounts')
+          .doc('counts')
+          .set(tagCounts, SetOptions(merge: true));
+
+      if (kDebugMode) {
+        print('Tag counts enviados a Firebase: $tagCounts');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error al enviar los tag counts: $e');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -414,22 +452,23 @@ class _HomeState extends State<Home> {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
-                  
+
                   if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   }
-                  
+
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(child: Text('No posts available'));
                   }
-                  
+
                   final posts = snapshot.data!;
                   final filtered = _applySearchFilter(posts);
-                  
+
                   if (filtered.isEmpty) {
-                    return const Center(child: Text('No posts match your search'));
+                    return const Center(
+                        child: Text('No posts match your search'));
                   }
-                  
+
                   return ListView.builder(
                     itemCount: filtered.length,
                     itemBuilder: (context, index) => _postCard(filtered[index]),
@@ -488,12 +527,12 @@ class _HomeState extends State<Home> {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            _chip('Recycle', const Color(0xFFB9DCA8),
-                const Color(0xFF64C533), Icons.recycling),
-            _chip('Upcycle', const Color(0xFFA8B7DC),
-                const Color(0xFF3D5CFF), Icons.compost),
-            _chip('Transport', const Color(0xFFDCA8A8),
-                const Color(0xFFD12E2E), Icons.directions_bike),
+            _chip('Recycle', const Color(0xFFB9DCA8), const Color(0xFF64C533),
+                Icons.recycling),
+            _chip('Upcycle', const Color(0xFFA8B7DC), const Color(0xFF3D5CFF),
+                Icons.compost),
+            _chip('Transport', const Color(0xFFDCA8A8), const Color(0xFFD12E2E),
+                Icons.directions_bike),
           ],
         ),
       );
@@ -528,13 +567,12 @@ class _HomeState extends State<Home> {
     if (assetId.startsWith('http://') || assetId.startsWith('https://')) {
       return assetId;
     }
-    
+
     // Si es un publicId de Cloudinary, construimos la URL
     try {
       final url = cloudinary
           .image(assetId)
-          .transformation(Transformation()
-            ..resize(Resize.scale().width(800)))
+          .transformation(Transformation()..resize(Resize.scale().width(800)))
           .toString();
       return url;
     } catch (e) {
@@ -550,7 +588,7 @@ class _HomeState extends State<Home> {
 
   Widget _postCard(PostModel post) {
     final tags = post.tags.join(', ');
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -579,13 +617,13 @@ class _HomeState extends State<Home> {
                 const Icon(Icons.person, size: 14, color: Color(0xFFB8B8D2)),
                 const SizedBox(width: 4),
                 Text(post.user,
-                    style:
-                        const TextStyle(fontSize: 13, color: Color(0xFFB8B8D2))),
+                    style: const TextStyle(
+                        fontSize: 13, color: Color(0xFFB8B8D2))),
               ],
             ),
             const SizedBox(height: 8),
             Text(post.text, style: const TextStyle(fontSize: 13)),
-            
+
             // AQUÍ ESTÁ EL CAMBIO PRINCIPAL: Uso de CachedNetworkImage
             if (post.asset.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -604,7 +642,7 @@ class _HomeState extends State<Home> {
                 ),
               ),
             ],
-            
+
             const SizedBox(height: 8),
             Row(
               children: [
