@@ -7,13 +7,9 @@ class LogoutScreen extends StatelessWidget {
 
   Future<void> _logout(BuildContext context) async {
     try {
-      // Limpiar SharedPreferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-      
       // Cerrar sesión en Firebase
       await FirebaseAuth.instance.signOut();
-      
+
       // Navegar a la pantalla de login
       Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
     } catch (e) {
@@ -65,7 +61,7 @@ class LogoutScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Título y mensaje
               const Text(
                 'Log Out',
@@ -86,7 +82,7 @@ class LogoutScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 36),
-              
+
               // Botones
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -95,7 +91,8 @@ class LogoutScreen extends StatelessWidget {
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Color(0xFF49447E)),
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -115,7 +112,8 @@ class LogoutScreen extends StatelessWidget {
                     onPressed: () => _logout(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF49447E),
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -123,11 +121,10 @@ class LogoutScreen extends StatelessWidget {
                     child: const Text(
                       'Log Out',
                       style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500
-                      ),
+                          fontFamily: 'Poppins',
+                          fontSize: 16,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],

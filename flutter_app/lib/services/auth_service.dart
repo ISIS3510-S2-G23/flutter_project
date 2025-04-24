@@ -86,9 +86,6 @@ class AuthService {
         QuerySnapshot querySnapshot =
             await FirebaseFirestore.instance.collection('users').get();
 
-        await prefs.setString('email', email);
-        await prefs.setString('password', password);
-
         DocumentSnapshot? userDoc;
         for (var doc in querySnapshot.docs) {
           if (doc['email'] == email) {
@@ -102,6 +99,8 @@ class AuthService {
 
           await prefs.setString('username', username);
           await prefs.setBool('isLoggedIn', true);
+          await prefs.setString('email', email);
+          await prefs.setString('password', password);
 
           Navigator.pushReplacementNamed(context, '/index');
         } else {

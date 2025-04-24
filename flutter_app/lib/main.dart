@@ -1,5 +1,6 @@
 import 'package:ecosphere/firebase_options.dart';
 import 'package:ecosphere/routes/routes.dart';
+import 'package:ecosphere/services/connectivity.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'dart:async';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +59,13 @@ Future<void> main() async {
 
   // Obtener la API key de ChatGPT
   final chatGptApiKey = dotenv.env['KEY_ECOSPHERE'] ?? '';
+
+  // Escuchar el Stream de conectividad
+  connectivityStream().listen((isConnected) {
+    if (!isConnected) {
+      showConnectivityToast();
+    }
+  });
 
   runApp(MyApp(chatGptApiKey: chatGptApiKey));
 }
