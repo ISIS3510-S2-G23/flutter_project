@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive/hive.dart';
 
 class PostsRepository {
@@ -94,18 +96,42 @@ class PostsRepository {
   Future<void> uploadPosts(String title, String text, List<String> tags,
       String user, List<String> comments) async {
     try {
-      await FirebaseFirestore.instance
-          .collection('posts')
-          .doc('post-$user-${DateTime.now().millisecondsSinceEpoch}')
-          .set({
-        'title': title,
-        'text': text,
-        'tags': tags,
-        'user': user,
-        'timestamp': FieldValue.serverTimestamp(),
-        'upvotes': 0,
-        'comments': comments
-      });
+      bool isConnected = await hasInternetConnection();
+
+      if (isConnected) {
+        await FirebaseFirestore.instance
+            .collection('posts')
+            .doc('post-$user-${DateTime.now().millisecondsSinceEpoch}')
+            .set({
+          'title': title,
+          'text': text,
+          'tags': tags,
+          'user': user,
+          'timestamp': FieldValue.serverTimestamp(),
+          'upvotes': 0,
+          'comments': comments
+        });
+      } else {
+        var box = Hive.box('postsQueue');
+        await box.add({
+          'title': title,
+          'text': text,
+          'tags': tags,
+          'user': user,
+          'comments': comments,
+          'timestamp': DateTime.now().toIso8601String(),
+        });
+        Fluttertoast.showToast(
+          msg:
+              "There is no internet connection. Your post will be uploaded when reconnected.",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 4,
+          backgroundColor: Colors.blueGrey,
+          textColor: Colors.black,
+          fontSize: 16.0,
+        );
+      }
     } catch (e) {
       rethrow;
     }
