@@ -17,7 +17,8 @@ Stream<bool> connectivityStream() async* {
 
 void showConnectivityToast() {
   Fluttertoast.showToast(
-    msg: "No hay señal. Por favor, verifica tu conexión a Internet.",
+    msg:
+        "There is no internet connection. Please, verify your internet connection.",
     toastLength: Toast.LENGTH_LONG,
     gravity: ToastGravity.BOTTOM,
     timeInSecForIosWeb: 4,
