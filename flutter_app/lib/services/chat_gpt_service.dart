@@ -125,3 +125,8 @@ class ChatGPTService {
     }
   }
 }
+
+String summarizeResponse(String fullText) {
+  if (fullText.trim().isEmpty) return "No response to summarize.";
+  return fullText.split('.').first.trim() + '...';
+}
