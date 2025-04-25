@@ -2,6 +2,8 @@ import 'package:ecosphere/views-viewmodels/points/subtabs/challenges.dart';
 import 'package:ecosphere/views-viewmodels/points/subtabs/near_me.dart';
 import 'package:ecosphere/views-viewmodels/points/subtabs/rewards.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:ecosphere/views-viewmodels/map_viewmodel.dart';
 
 class Points extends StatefulWidget {
   const Points({super.key});
@@ -127,7 +129,10 @@ class _PointsState extends State<Points> with SingleTickerProviderStateMixin {
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    NearMe(),
+                    ChangeNotifierProvider(
+                      create: (_) => MapViewModel(),
+                      child: NearMe(),
+                    ),
                     Challenges(tabController: _tabController),
                     Rewards(tabController: _tabController),
                   ],
