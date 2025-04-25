@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 class ChatGPTService {
   final String apiKey;
@@ -124,4 +125,22 @@ class ChatGPTService {
       return null;
     }
   }
+
+  Future<String> summarizeUsingCompute(String responseText) async {
+    try {
+      isProcessing.value = true;
+      final summary = await compute(summarizeResponse, responseText);
+      return summary;
+    } catch (e) {
+      debugPrint("Error in compute isolate: $e");
+      return "Summary failed.";
+    } finally {
+      isProcessing.value = false;
+    }
+  }
+}
+
+String summarizeResponse(String fullText) {
+  if (fullText.trim().isEmpty) return "No response to summarize.";
+  return fullText.split('.').first.trim() + '...';
 }
