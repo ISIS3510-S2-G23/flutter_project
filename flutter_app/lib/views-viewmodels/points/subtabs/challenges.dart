@@ -1,8 +1,12 @@
 // ignore_for_file: prefer_interpolation_to_compose_strings
 
+import 'dart:async';
 import 'dart:io';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:ecosphere/repositories/challenges_repository.dart';
+import 'package:ecosphere/services/connectivity.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // IMPORTS necesarios para tomar la foto
@@ -29,6 +33,9 @@ class _ChallengesState extends State<Challenges> {
       ChatGPTService(dotenv.env['KEY_ECOSPHERE']!); // Servicio de ChatGPT
 
   bool _isProcessing = false; // Para mostrar indicador de carga
+  bool _isConnected = true; // Estado de conectividad
+  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
+
   final ChallengesRepository _challengesRepository = ChallengesRepository();
   // --------------------------------------------------------------
 
@@ -36,6 +43,13 @@ class _ChallengesState extends State<Challenges> {
   void initState() {
     super.initState();
     _loadUser();
+    _checkConnectivity();
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription.cancel();
+    super.dispose();
   }
 
   Future<void> _loadUser() async {
@@ -45,12 +59,35 @@ class _ChallengesState extends State<Challenges> {
     });
   }
 
+  void _checkConnectivity() {
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {
+      setState(() {
+        _isConnected = result != ConnectivityResult.none;
+      });
+    });
+  }
+
   // Método para resetear el estado del challenge
   void _resetChallengeState() {
     setState(() {
       _selectedImage = null;
       _isProcessing = false;
     });
+  }
+
+  void _showConnectivityToast() {
+    Fluttertoast.showToast(
+      msg:
+          "There is no internet connection for processing this image. Please, verify your internet connection and try again.",
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 4,
+      backgroundColor: Colors.blueGrey,
+      textColor: Colors.black,
+      fontSize: 16.0,
+    );
   }
 
   // ----------------------------------------------------------------
@@ -63,20 +100,13 @@ class _ChallengesState extends State<Challenges> {
         _isProcessing = true;
       });
 
-      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.camera);
+      final XFile? pickedFile =
+          await _picker.pickImage(source: ImageSource.camera);
 
       if (pickedFile != null) {
         setState(() {
           _selectedImage = File(pickedFile.path);
         });
-
-        // Mostrar indicador de progreso mientras se procesa
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   const SnackBar(
-        //     content: Text('Processing image, please wait...'),
-        //     duration: Duration(seconds: 2),
-        //   ),
-        // );
 
         // Llamamos a nuestro servicio de validación con ChatGPT
         final code = await _chatGptService.validatePhoto(_selectedImage!.path);
@@ -85,11 +115,12 @@ class _ChallengesState extends State<Challenges> {
         if (code != null) {
           // Marcar el desafío como completado automáticamente
           if (user != null) {
-            await _challengesRepository.setCompletedChallenge(challenge.id, user);
-            
+            await _challengesRepository.setCompletedChallenge(
+                challenge.id, user);
+
             // Cerrar el diálogo actual
             Navigator.of(context).pop();
-            
+
             // Mostrar el diálogo de desafío completado con un delay corto
             Future.delayed(const Duration(milliseconds: 300), () {
               showDialog(
@@ -117,18 +148,6 @@ class _ChallengesState extends State<Challenges> {
               );
             });
           }
-        } else {
-          // // La imagen no cumplió con los requisitos
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   SnackBar(
-          //     content: const Text(
-          //       'The image does not meet the requirements. Please try again.',
-          //       style: TextStyle(fontSize: 16),
-          //     ),
-          //     backgroundColor: Colors.red.shade700,
-          //     duration: const Duration(seconds: 10),
-          //   ),
-          // );
         }
       }
     } catch (e) {
@@ -362,15 +381,18 @@ class _ChallengesState extends State<Challenges> {
           ),
         ),
         const SizedBox(height: 25),
-        
+
         // Si está procesando, mostrar indicador
         _isProcessing
             ? const CircularProgressIndicator(color: Color(0xFF49447E))
             : ElevatedButton.icon(
-                onPressed: () {
-                  // LLAMAMOS AL MÉTODO de la cámara pasando el challenge
-                  _pickImageFromCamera(challenge);
-                },
+                onPressed: _isConnected
+                    ? () {
+                        _pickImageFromCamera(challenge);
+                      }
+                    : () {
+                        _showConnectivityToast();
+                      },
                 icon: const Icon(Icons.camera_alt, color: Colors.black),
                 label: const Text(
                   'Take Photo',
@@ -380,11 +402,15 @@ class _ChallengesState extends State<Challenges> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFEAEAFF),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  backgroundColor: _isConnected
+                      ? const Color(0xFFEAEAFF)
+                      : Colors
+                          .grey.shade400, // Cambia el color si está desactivado
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
               ),
-        
+
         const SizedBox(height: 15),
         const Text(
           'Take a clear photo that shows the activity',
