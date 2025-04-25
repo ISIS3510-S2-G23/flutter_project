@@ -1,13 +1,17 @@
 // ignore_for_file: prefer_interpolation_to_compose_strings
 
+import 'dart:async';
 import 'dart:io';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:ecosphere/repositories/challenges_repository.dart';
+import 'package:ecosphere/services/connectivity.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // IMPORTS necesarios para tomar la foto
-import 'package:image_picker/image_picker.dart'; // <--- Import image_picker
-import 'package:ecosphere/services/chat_gpt_service.dart'; // <--- Import ChatGPTService
+import 'package:image_picker/image_picker.dart';
+import 'package:ecosphere/services/chat_gpt_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class Challenges extends StatefulWidget {
@@ -28,8 +32,10 @@ class _ChallengesState extends State<Challenges> {
   final ChatGPTService _chatGptService =
       ChatGPTService(dotenv.env['KEY_ECOSPHERE']!); // Servicio de ChatGPT
 
-  // Controlador para el campo "Type code"
-  final TextEditingController _codeController = TextEditingController();
+  bool _isProcessing = false; // Para mostrar indicador de carga
+  bool _isConnected = true; // Estado de conectividad
+  late StreamSubscription<ConnectivityResult> _connectivitySubscription;
+
   final ChallengesRepository _challengesRepository = ChallengesRepository();
   // --------------------------------------------------------------
 
@@ -37,6 +43,13 @@ class _ChallengesState extends State<Challenges> {
   void initState() {
     super.initState();
     _loadUser();
+    _checkConnectivity();
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription.cancel();
+    super.dispose();
   }
 
   Future<void> _loadUser() async {
@@ -46,33 +59,108 @@ class _ChallengesState extends State<Challenges> {
     });
   }
 
+  void _checkConnectivity() {
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {
+      setState(() {
+        _isConnected = result != ConnectivityResult.none;
+      });
+    });
+  }
+
   // Método para resetear el estado del challenge
   void _resetChallengeState() {
     setState(() {
       _selectedImage = null;
-      _codeController.clear();
+      _isProcessing = false;
     });
   }
 
-  // ----------------------------------------------------------------
-  // MÉTODO para abrir la cámara y tomar la foto
-  // ----------------------------------------------------------------
-  Future<void> _pickImageFromCamera() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.camera);
+  void _showConnectivityToast() {
+    Fluttertoast.showToast(
+      msg:
+          "There is no internet connection for processing this image. Please, verify your internet connection and try again.",
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 4,
+      backgroundColor: Colors.blueGrey,
+      textColor: Colors.black,
+      fontSize: 16.0,
+    );
+  }
 
-    if (pickedFile != null) {
+  // ----------------------------------------------------------------
+  // MÉTODO para abrir la cámara y procesar la foto automáticamente
+  // ----------------------------------------------------------------
+  Future<void> _pickImageFromCamera(dynamic challenge) async {
+    try {
+      // Mostrar un indicador de progreso mientras se toma la foto
       setState(() {
-        _selectedImage = File(pickedFile.path);
+        _isProcessing = true;
       });
 
-      // Llamamos a nuestro servicio "validatePhoto"
-      // que retorna un código cuando ChatGPT responde "SI", o null si "NO".
-      final code = await _chatGptService.validatePhoto(_selectedImage!.path);
+      final XFile? pickedFile =
+          await _picker.pickImage(source: ImageSource.camera);
 
-      // Si code != null, se escribe en el TextField
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+        });
+
+        // Llamamos a nuestro servicio de validación con ChatGPT
+        final code = await _chatGptService.validatePhoto(_selectedImage!.path);
+
+        // Si ChatGPT responde positivamente (code no es null)
+        if (code != null) {
+          // Marcar el desafío como completado automáticamente
+          if (user != null) {
+            await _challengesRepository.setCompletedChallenge(
+                challenge.id, user);
+
+            // Cerrar el diálogo actual
+            Navigator.of(context).pop();
+
+            // Mostrar el diálogo de desafío completado con un delay corto
+            Future.delayed(const Duration(milliseconds: 300), () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    backgroundColor: Colors.white,
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ),
+                        _buildCompletedChallenge(),
+                      ],
+                    ),
+                  );
+                },
+              );
+            });
+          }
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      // Siempre terminar el procesamiento
       setState(() {
-        _codeController.text = code ?? '';
+        _isProcessing = false;
       });
     }
   }
@@ -276,7 +364,7 @@ class _ChallengesState extends State<Challenges> {
     return Column(
       children: [
         const Text(
-          'Register visit',
+          'Register Visit',
           style: TextStyle(
             fontSize: 16,
             color: Color(0xFF49447E),
@@ -292,93 +380,47 @@ class _ChallengesState extends State<Challenges> {
             color: Color(0xFF858597),
           ),
         ),
-        const SizedBox(height: 20),
-        // BOTÓN para abrir la cámara
-        // This will update in real-time when _codeController.text changes
-        ValueListenableBuilder<TextEditingValue>(
-          valueListenable: _codeController,
-          builder: (context, value, child) {
-            return value.text.isNotEmpty
-                ? Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFD3ECED),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.check_circle,
-                      color: Color(0xFF03898C),
-                      size: 40,
-                    ),
-                  )
-                : ElevatedButton(
-                    onPressed: () {
-                      // LLAMAMOS AL MÉTODO de la cámara
-                      _pickImageFromCamera();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFEAEAFF),
-                    ),
-                    child: const Text(
-                      'Open Camera',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  );
-          },
-        ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 25),
+
+        // Si está procesando, mostrar indicador
+        _isProcessing
+            ? const CircularProgressIndicator(color: Color(0xFF49447E))
+            : ElevatedButton.icon(
+                onPressed: _isConnected
+                    ? () {
+                        _pickImageFromCamera(challenge);
+                      }
+                    : () {
+                        _showConnectivityToast();
+                      },
+                icon: const Icon(Icons.camera_alt, color: Colors.black),
+                label: const Text(
+                  'Take Photo',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _isConnected
+                      ? const Color(0xFFEAEAFF)
+                      : Colors
+                          .grey.shade400, // Cambia el color si está desactivado
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+              ),
+
+        const SizedBox(height: 15),
         const Text(
-          'Provide the code given by the recycle point manager',
+          'Take a clear photo that shows the activity',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 12,
             color: Color(0xFF858597),
+            fontStyle: FontStyle.italic,
           ),
         ),
-        const SizedBox(height: 20),
-        // TextField donde mostramos el code que devolvió ChatGPT
-        TextField(
-          controller: _codeController, // <--- Usamos el controlador
-          decoration: InputDecoration(
-            hintText: 'Type code',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        ElevatedButton(
-          onPressed: () {
-            // Al registrar, puedes, por ejemplo, marcar el challenge como completado
-            // si el code coincide con _codeController.text
-            if (_codeController.text.isNotEmpty) {
-              setState(() {
-                // EJEMPLO: Si code == "123456", completamos el reto en Firestore
-                if (_codeController.text == "123456" && user != null) {
-                  _challengesRepository.setCompletedChallenge(
-                      challenge.id, user);
-                }
-
-                // Reseteamos el estado antes de cerrar
-                _resetChallengeState();
-                Navigator.of(context).pop();
-              });
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF49447E),
-          ),
-          child: const Text(
-            'Register',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        )
       ],
     );
   }

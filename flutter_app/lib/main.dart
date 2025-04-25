@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:ecosphere/firebase_options.dart';
 import 'package:ecosphere/routes/routes.dart';
+import 'package:ecosphere/services/connectivity.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,14 +12,22 @@ import 'package:cloudinary_flutter/cloudinary_context.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'dart:async';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
+    listenForConnectivityChanges();
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+
+    await Hive.initFlutter();
+    await Hive.openBox('posts');
+    await Hive.openBox('postsQueue');
+
     if (kDebugMode) {
       print("Firebase inicializado correctamente");
     }
@@ -38,6 +49,8 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
   FlutterError.onError = (details) {
     FirebaseCrashlytics.instance.recordFlutterError(details);
   };
@@ -52,6 +65,13 @@ Future<void> main() async {
 
   // Obtener la API key de ChatGPT
   final chatGptApiKey = dotenv.env['KEY_ECOSPHERE'] ?? '';
+
+  // Escuchar el Stream de conectividad
+  connectivityStream().listen((isConnected) {
+    if (!isConnected) {
+      showConnectivityToast();
+    }
+  });
 
   runApp(MyApp(chatGptApiKey: chatGptApiKey));
 }
@@ -118,4 +138,52 @@ class MyApp extends StatelessWidget {
       routes: Routes.routes,
     );
   }
+}
+
+void listenForConnectivityChanges() {
+  Connectivity()
+      .onConnectivityChanged
+      .listen((ConnectivityResult result) async {
+    if (result == ConnectivityResult.mobile ||
+        result == ConnectivityResult.wifi) {
+      await processPendingPosts();
+    }
+  });
+}
+
+Future<void> processPendingPosts() async {
+  try {
+    bool isConnected = await hasInternetConnection();
+
+    if (isConnected) {
+      var box = Hive.box('postsQueue');
+      List<dynamic> pendingPosts = box.values.toList();
+
+      for (var post in pendingPosts) {
+        await FirebaseFirestore.instance
+            .collection('posts')
+            .doc(
+                'post-${post['user']}-${DateTime.now().millisecondsSinceEpoch}')
+            .set({
+          'title': post['title'],
+          'text': post['text'],
+          'tags': post['tags'],
+          'user': post['user'],
+          'timestamp': FieldValue.serverTimestamp(),
+          'upvotes': 0,
+          'comments': post['comments']
+        });
+      }
+
+      await box.clear();
+    }
+  } catch (e) {
+    rethrow;
+  }
+}
+
+Future<bool> hasInternetConnection() async {
+  var connectivityResult = await Connectivity().checkConnectivity();
+  return connectivityResult == ConnectivityResult.mobile ||
+      connectivityResult == ConnectivityResult.wifi;
 }

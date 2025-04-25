@@ -18,10 +18,16 @@ class _IndexScreenState extends State<IndexScreen> {
   final List<Widget> _pages = [
     Home(),
     Points(),
-    Home(),
+    Home(), // Placeholder page for Add Post
     Notifications(),
     Account(),
   ];
+
+  Future<void> _onRefresh() async {
+    await Future.delayed(const Duration(seconds: 1));
+    setState(() {});
+    Navigator.pushReplacementNamed(context, '/index');
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -40,9 +46,12 @@ class _IndexScreenState extends State<IndexScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: _pages,
+        ),
       ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: Colors.white,
