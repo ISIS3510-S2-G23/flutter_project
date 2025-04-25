@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import 'package:ecosphere/views-viewmodels/map_viewmodel.dart';
 
 class NearMe extends StatefulWidget {
   const NearMe({super.key});
@@ -16,14 +18,26 @@ class NearMe extends StatefulWidget {
 class _NearMeState extends State<NearMe> {
   GoogleMapController? _mapController;
   LatLng? _currentPosition;
-  Set<Marker> _markers = {};
-  final LocationsRepository _locationsRepository = LocationsRepository();
+  //Set<Marker> _markers = {};
+  //final LocationsRepository _locationsRepository = LocationsRepository();
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation();
-    _fetchRecyclingCenters();
+    //_fetchRecyclingCenters();
+    Future.microtask(() {
+      final viewModel = context.read<MapViewModel>();
+      viewModel.loadMarkers().then((_) {
+        print("✅ TEST: Se cargaron ${viewModel.markers.length} marcadores:");
+        for (var m in viewModel.markers) {
+          print(
+              "- ${m.markerId.value} | ${m.position.latitude}, ${m.position.longitude}");
+        }
+      }).catchError((e) {
+        print("❌ Error en NearMe ViewModel: $e");
+      });
+    });
   }
 
   Future<void> _getCurrentLocation() async {
@@ -39,31 +53,33 @@ class _NearMeState extends State<NearMe> {
     });
   }
 
-  Future<void> _fetchRecyclingCenters() async {
-    _locationsRepository.getLocations().then((query) {
-      Set<Marker> newMarkers = {};
-      for (var doc in query.docs) {
-        var data = doc.data();
-        GeoPoint location = data['location'];
-        newMarkers.add(
-          Marker(
-            markerId: MarkerId(doc.id),
-            position: LatLng(location.latitude, location.longitude),
-            infoWindow: InfoWindow(title: data['name']),
-          ),
-        );
-      }
-      setState(() {
-        _markers = newMarkers;
-      });
-    });
-  }
+  //Future<void> _fetchRecyclingCenters() async {
+  //_locationsRepository.getLocations().then((query) {
+  //Set<Marker> newMarkers = {};
+  //for (var doc in query.docs) {
+  //var data = doc.data();
+  //GeoPoint location = data['location'];
+  //newMarkers.add(
+  //Marker(
+  //markerId: MarkerId(doc.id),
+  //position: LatLng(location.latitude, location.longitude),
+  //infoWindow: InfoWindow(title: data['name']),
+  //),
+  //);
+  //}
+  //setState(() {
+  //_markers = newMarkers;
+  //});
+  //});
+  //}
 
   @override
   Widget build(BuildContext context) {
+    final mapViewModel = context.watch<MapViewModel>();
+
     return Scaffold(
       body: _currentPosition == null
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : GoogleMap(
               initialCameraPosition: CameraPosition(
                 target: _currentPosition!,
@@ -71,15 +87,14 @@ class _NearMeState extends State<NearMe> {
               ),
               onMapCreated: (controller) => _mapController = controller,
               markers: {
-                if (_currentPosition != null)
-                  Marker(
-                    markerId: MarkerId("current_location"),
-                    position: _currentPosition!,
-                    icon: BitmapDescriptor.defaultMarkerWithHue(
-                        BitmapDescriptor.hueBlue),
-                    infoWindow: InfoWindow(title: "Your Location"),
-                  ),
-                ..._markers,
+                Marker(
+                  markerId: const MarkerId("current_location"),
+                  position: _currentPosition!,
+                  icon: BitmapDescriptor.defaultMarkerWithHue(
+                      BitmapDescriptor.hueBlue),
+                  infoWindow: const InfoWindow(title: "Your Location"),
+                ),
+                ...mapViewModel.markers,
               },
             ),
     );
