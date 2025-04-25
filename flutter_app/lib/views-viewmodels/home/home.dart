@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
@@ -34,6 +35,43 @@ class _HomeState extends State<Home> {
 
   // Instancia del repositorio
   final PostsRepository _postsRepository = PostsRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    _sendTagCountsToFirebase();
+  }
+
+  Future<void> _sendTagCountsToFirebase() async {
+    try {
+      final querySnapshot =
+          await FirebaseFirestore.instance.collection('posts').get();
+
+      final Map<String, int> tagCounts = {};
+
+      for (var doc in querySnapshot.docs) {
+        final data = doc.data();
+        if (data['tags'] is List) {
+          for (var tag in data['tags']) {
+            tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
+          }
+        }
+      }
+
+      await FirebaseFirestore.instance
+          .collection('tagCounts')
+          .doc('counts')
+          .set(tagCounts, SetOptions(merge: true));
+
+      if (kDebugMode) {
+        print('Tag counts enviados a Firebase: $tagCounts');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error al enviar los tag counts: $e');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
