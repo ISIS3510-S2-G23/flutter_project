@@ -9,10 +9,10 @@ import '../views-viewmodels/auth/signup.dart';
 import '../views-viewmodels/auth/signup_success.dart';
 import '../views-viewmodels/home/splash.dart';
 
-import 'package:ecosphere/views-viewmodels/account/Edit_Account.dart';
-import 'package:ecosphere/views-viewmodels/account/Setting_Privacy.dart';
-import 'package:ecosphere/views-viewmodels/account/Help.dart';
-import 'package:ecosphere/views-viewmodels/account/Log_Out.dart';
+import 'package:ecosphere/views-viewmodels/account/edit_account.dart';
+import 'package:ecosphere/views-viewmodels/account/setting_privacy.dart';
+import 'package:ecosphere/views-viewmodels/account/help.dart';
+import 'package:ecosphere/views-viewmodels/account/log_out.dart';
 
 class Routes {
   static final Map<String, WidgetBuilder> routes = {

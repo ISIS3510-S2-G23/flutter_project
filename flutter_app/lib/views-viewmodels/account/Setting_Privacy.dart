@@ -1,9 +1,8 @@
+import 'package:ecosphere/views-viewmodels/account/Policy_TermsOfService/privacy_policy.dart';
+import 'package:ecosphere/views-viewmodels/account/Policy_TermsOfService/terms_of_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-
-import 'package:ecosphere/views-viewmodels/account/Policy_TermsOfService/PrivacyPolicy.dart';
-import 'package:ecosphere/views-viewmodels/account/Policy_TermsOfService/TermsOfService.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -17,7 +16,7 @@ class _SettingsState extends State<Settings> {
   bool _darkModeEnabled = false;
   String _selectedLanguage = 'English';
   bool _isLoading = false;
-  
+
   final List<String> _languages = ['English', 'Spanish', 'French', 'German'];
 
   @override
@@ -25,12 +24,12 @@ class _SettingsState extends State<Settings> {
     super.initState();
     _loadSettings();
   }
-  
+
   Future<void> _loadSettings() async {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       setState(() {
@@ -49,14 +48,14 @@ class _SettingsState extends State<Settings> {
       });
     }
   }
-  
+
   Future<void> _saveSettings() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setBool('notifications_enabled', _notificationsEnabled);
       await prefs.setBool('dark_mode_enabled', _darkModeEnabled);
       await prefs.setString('language', _selectedLanguage);
-      
+
       Fluttertoast.showToast(
         msg: 'Settings saved successfully',
         backgroundColor: Colors.green,
@@ -68,7 +67,7 @@ class _SettingsState extends State<Settings> {
       );
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,7 +90,8 @@ class _SettingsState extends State<Settings> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF49447E)))
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF49447E)))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -121,7 +121,7 @@ class _SettingsState extends State<Settings> {
                     contentPadding: EdgeInsets.zero,
                   ),
                   const Divider(height: 32),
-                  
+
                   // Sección de visualización
                   const Text(
                     'Display',
@@ -146,7 +146,7 @@ class _SettingsState extends State<Settings> {
                     contentPadding: EdgeInsets.zero,
                   ),
                   const Divider(height: 32),
-                  
+
                   // Sección de idioma
                   const Text(
                     'Language',
@@ -184,7 +184,7 @@ class _SettingsState extends State<Settings> {
                     },
                   ),
                   const Divider(height: 32),
-                  
+
                   // Sección de privacidad
                   const Text(
                     'Privacy',
@@ -225,7 +225,7 @@ class _SettingsState extends State<Settings> {
                     },
                   ),
                   const SizedBox(height: 40),
-                  
+
                   // Botón para borrar la cuenta
                   Center(
                     child: TextButton(
@@ -235,7 +235,8 @@ class _SettingsState extends State<Settings> {
                           context: context,
                           builder: (context) => AlertDialog(
                             title: const Text('Delete Account'),
-                            content: const Text('Are you sure you want to delete your account? This action cannot be undone.'),
+                            content: const Text(
+                                'Are you sure you want to delete your account? This action cannot be undone.'),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
@@ -246,7 +247,8 @@ class _SettingsState extends State<Settings> {
                                   // Lógica para eliminar la cuenta
                                   Navigator.pop(context);
                                 },
-                                child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                child: const Text('Delete',
+                                    style: TextStyle(color: Colors.red)),
                               ),
                             ],
                           ),

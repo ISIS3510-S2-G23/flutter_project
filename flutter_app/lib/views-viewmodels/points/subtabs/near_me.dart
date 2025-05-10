@@ -1,9 +1,10 @@
+// ignore_for_file: unused_field
+
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'dart:async';
-import 'package:ecosphere/repositories/locations_repository.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
@@ -33,13 +34,19 @@ class _NearMeState extends State<NearMe> {
     Future.microtask(() {
       final viewModel = context.read<MapViewModel>();
       viewModel.loadMarkers().then((_) {
-        print("✅ TEST: Se cargaron ${viewModel.markers.length} marcadores:");
+        if (kDebugMode) {
+          print("✅ TEST: Se cargaron ${viewModel.markers.length} marcadores:");
+        }
         for (var m in viewModel.markers) {
-          print(
-              "- ${m.markerId.value} | ${m.position.latitude}, ${m.position.longitude}");
+          if (kDebugMode) {
+            print(
+                "- ${m.markerId.value} | ${m.position.latitude}, ${m.position.longitude}");
+          }
         }
       }).catchError((e) {
-        print("❌ Error en NearMe ViewModel: $e");
+        if (kDebugMode) {
+          print("❌ Error en NearMe ViewModel: $e");
+        }
       });
     });
   }

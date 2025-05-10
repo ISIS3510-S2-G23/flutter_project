@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cached_network_image/cached_network_image.dart'; // Nueva importación
 
@@ -42,21 +41,30 @@ class _HomeState extends State<Home> {
     _sendTagCountsToFirebase();
   }
 
+  Map<String, int> countTagsInPosts(List<Map<String, dynamic>> posts) {
+    final Map<String, int> tagCounts = {};
+    for (var data in posts) {
+      if (data['tags'] is List) {
+        for (var tag in data['tags']) {
+          tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
+        }
+      }
+    }
+    return tagCounts;
+  }
+
+  // uso de isolate en compute() y uso de un future con un await async future
+  // https://docs.flutter.dev/perf/isolates#:~:text=consider%20using%20isolates.-,Web%20platforms%20and%20compute,fun%2C%20message)%20is%20equivalent%20to%20await%20Isolate.run(()%20%3D%3E%20fun(message)).,-For%20more%20information
   Future<void> _sendTagCountsToFirebase() async {
     try {
       final querySnapshot =
           await FirebaseFirestore.instance.collection('posts').get();
 
-      final Map<String, int> tagCounts = {};
+      final List<Map<String, dynamic>> posts =
+          querySnapshot.docs.map((doc) => doc.data()).toList();
 
-      for (var doc in querySnapshot.docs) {
-        final data = doc.data();
-        if (data['tags'] is List) {
-          for (var tag in data['tags']) {
-            tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
-          }
-        }
-      }
+      // Ejecuta el conteo en un Isolate
+      final tagCounts = await compute(countTagsInPosts, posts);
 
       await FirebaseFirestore.instance
           .collection('tagCounts')
