@@ -7,6 +7,7 @@ import 'package:ecosphere/repositories/challenges_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:quiver/collection.dart';
 
 // IMPORTS necesarios para tomar la foto
 import 'package:image_picker/image_picker.dart';
@@ -36,6 +37,10 @@ class _ChallengesState extends State<Challenges> {
   late StreamSubscription<ConnectivityResult> _connectivitySubscription;
 
   final ChallengesRepository _challengesRepository = ChallengesRepository();
+
+  // LRU cache para retos y para datos de usuario por reto
+  final LruMap<String, dynamic> _challengeCache = LruMap(maximumSize: 20);
+  final LruMap<String, dynamic> _userChallengeCache = LruMap(maximumSize: 50);
   // --------------------------------------------------------------
 
   @override
@@ -189,21 +194,40 @@ class _ChallengesState extends State<Challenges> {
                 itemBuilder: (context, index) {
                   var challenge = challenges[index];
 
+                  // LRU cache para retos
+                  var cachedChallenge = _challengeCache[challenge.id];
+                  if (cachedChallenge == null) {
+                    _challengeCache[challenge.id] = challenge;
+                    cachedChallenge = challenge;
+                  }
+
+                  // LRU cache para datos de usuario por reto
+                  var cacheKey = '${cachedChallenge.id}-$user';
+                  var cachedUserChallenge = _userChallengeCache[cacheKey];
+
                   return FutureBuilder(
-                    future: _challengesRepository.getUsersChallenges(
-                        challenge.id, user),
+                    future: cachedUserChallenge != null
+                        ? Future.value(cachedUserChallenge)
+                        : _challengesRepository
+                            .getUsersChallenges(cachedChallenge.id, user)
+                            .then((data) {
+                            _userChallengeCache[cacheKey] = data;
+                            return data;
+                          }),
                     builder: (context, userChallengeSnapshot) {
                       if (!userChallengeSnapshot.hasData) {
                         return const Center(child: CircularProgressIndicator());
                       }
 
                       var userChallengeData = userChallengeSnapshot.data!;
-                      bool isCompleted = userChallengeData.exists
-                          ? userChallengeData['completed']
+                      // Cast to the correct type (e.g., DocumentSnapshot or Map)
+                      final data = userChallengeData as Map<String, dynamic>;
+                      bool isCompleted = data.containsKey('completed')
+                          ? data['completed']
                           : false;
 
-                      int progress = userChallengeData.exists
-                          ? (userChallengeData['progress'] * 100).toInt()
+                      int progress = data.containsKey('progress')
+                          ? (data['progress'] * 100).toInt()
                           : 0;
 
                       return GestureDetector(
