@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:quiver/collection.dart';
+import 'package:path_provider/path_provider.dart';
 
 class AddPost extends StatefulWidget {
   const AddPost({super.key});
@@ -26,8 +27,6 @@ class _AddPostState extends State<AddPost> {
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   final PostsRepository repository = PostsRepository();
-  final ChatGPTService _chatGptService =
-      ChatGPTService(dotenv.env['KEY_ECOSPHERE']!);
   final LruMap<String, String> _suggestedTextCache = LruMap(maximumSize: 5);
   DateTime? _entryTime;
 
@@ -362,7 +361,7 @@ class _AddPostState extends State<AddPost> {
                                               Icon(Icons.add_a_photo_outlined),
                                           onPressed: () =>
                                               _showPicker(context)),
-                                      _selectedImage != null
+                                      _selectedImage == null
                                           ? Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
@@ -381,7 +380,6 @@ class _AddPostState extends State<AddPost> {
                                                     String suggestedText =
                                                         await _getSuggestedTextFromImage(
                                                             _selectedImage!);
-                                                    if (!mounted) return;
                                                     showDialog(
                                                       context: context,
                                                       builder: (context) =>
@@ -416,7 +414,7 @@ class _AddPostState extends State<AddPost> {
                                                       ),
                                                     );
                                                   },
-                                                  child: Text('Sugerir texto'),
+                                                  child: Text('Sugest caption'),
                                                 ),
                                               ],
                                             )
@@ -473,17 +471,33 @@ class _AddPostState extends State<AddPost> {
 
   Future<String> _getSuggestedTextFromImage(File file) async {
     final key = file.path.hashCode.toString();
+    final List<int> imageBytes = await file.readAsBytes();
+    final File savedFile = await saveFileLocally(imageBytes, key);
     if (_suggestedTextCache.containsKey(key)) {
       return _suggestedTextCache[key]!;
     }
     // VIVAVOCE: compute -> uso de un nuevo thread ISOLATE
     // hace cache fb to network, y si no, se vuelve network only
-    final result = await compute(
-      (List args) => _chatGptService.generateCaption(args[0]),
-      [file],
-    );
+    final result = await compute(generateCaptionIsolate, {
+      'apiKey': dotenv.env['KEY_ECOSPHERE'],
+      'filePath': savedFile.path,
+    });
     // VIVAVOCE: LRU cache -> uso de cache para no generar de nuevo el caption si ya se había generado
     _suggestedTextCache[key] = result!;
     return result;
+  }
+
+  // Top-level function for isolate
+  Future<String?> generateCaptionIsolate(Map<String, dynamic> args) async {
+    final apiKey = args['apiKey'] as String;
+    final filePath = args['filePath'] as String;
+    final chatGptService = ChatGPTService(apiKey);
+    return await chatGptService.generateCaption(File(filePath));
+  }
+
+  Future<File> saveFileLocally(List<int> bytes, String filename) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$filename');
+    return file;
   }
 }
