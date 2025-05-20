@@ -4,11 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecosphere/repositories/posts_repository.dart';
 import 'package:ecosphere/services/chat_gpt_service.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:quiver/collection.dart';
 
 class AddPost extends StatefulWidget {
   const AddPost({super.key});
@@ -26,6 +28,7 @@ class _AddPostState extends State<AddPost> {
   final PostsRepository repository = PostsRepository();
   final ChatGPTService _chatGptService =
       ChatGPTService(dotenv.env['KEY_ECOSPHERE']!);
+  final LruMap<String, String> _suggestedTextCache = LruMap(maximumSize: 5);
 
   Future<void> _pickImageFromCamera() async {
     final XFile? pickedFile =
@@ -443,7 +446,18 @@ class _AddPostState extends State<AddPost> {
     );
   }
 
-  _getSuggestedTextFromImage(File file) async {
-    return await _chatGptService.generateCaption(file);
+  Future<String> _getSuggestedTextFromImage(File file) async {
+    final key = file.path.hashCode.toString();
+    if (_suggestedTextCache.containsKey(key)) {
+      return _suggestedTextCache[key]!;
+    }
+    // VIVAVOCE: compute -> uso de un nuevo thread ISOLATE
+    final result = await compute(
+      (List args) => _chatGptService.generateCaption(args[0]),
+      [file],
+    );
+    // VIVAVOCE: LRU cache -> uso de cache para no generar de nuevo el caption si ya se había generado
+    _suggestedTextCache[key] = result!;
+    return result;
   }
 }

@@ -153,6 +153,7 @@ class ChatGPTService {
           textColor: Colors.white);
 
       // Leer la imagen y convertirla a base64
+
       final List<int> imageBytes = await imageFile.readAsBytes();
       final String base64Image = base64Encode(imageBytes);
 
