@@ -452,6 +452,7 @@ class _AddPostState extends State<AddPost> {
       return _suggestedTextCache[key]!;
     }
     // VIVAVOCE: compute -> uso de un nuevo thread ISOLATE
+    // hace cache fb to network, y si no, se vuelve network only
     final result = await compute(
       (List args) => _chatGptService.generateCaption(args[0]),
       [file],

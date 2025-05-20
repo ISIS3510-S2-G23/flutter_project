@@ -141,6 +141,18 @@ class ChatGPTService {
 
   Future<String?> generateCaption(File imageFile) async {
     try {
+      // VIVAVOCE: EC -> no internet connection, en su llamado, inicia en cache fb a network
+      final bool hasConnection = await _checkInternetConnection();
+      if (!hasConnection) {
+        Fluttertoast.showToast(
+            msg: 'No internet connection. Cannot generate captions.',
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Color(0xFFDCA8A8),
+            textColor: Colors.white);
+        return null;
+      }
+
       // Activar el indicador de procesamiento
       isProcessing.value = true;
 
@@ -153,7 +165,6 @@ class ChatGPTService {
           textColor: Colors.white);
 
       // Leer la imagen y convertirla a base64
-
       final List<int> imageBytes = await imageFile.readAsBytes();
       final String base64Image = base64Encode(imageBytes);
 
@@ -164,8 +175,7 @@ class ChatGPTService {
           'Authorization': 'Bearer $apiKey',
         },
         body: json.encode({
-          'model':
-              'gpt-4o', // Cambiado a gpt-4o que tiene capacidades de visión
+          'model': 'gpt-4o',
           'messages': [
             {
               'role': 'user',
@@ -197,21 +207,38 @@ class ChatGPTService {
             .toUpperCase();
         return content;
       } else {
-        // Error en la API
         Fluttertoast.showToast(
             msg: 'API Error: ${response.statusCode}',
             backgroundColor: Color(0xFFDCA8A8));
         return null;
       }
+    } on SocketException {
+      Fluttertoast.showToast(
+          msg: 'No internet connection. Cannot generate captions.',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Color(0xFFDCA8A8),
+          textColor: Colors.white);
+      return null;
     } catch (e) {
-      // Desactivar el indicador de procesamiento en caso de error
       isProcessing.value = false;
-
-      // Manejo de error
       Fluttertoast.showToast(
           msg: 'Error processing image: $e',
           backgroundColor: Color(0xFFDCA8A8));
       return null;
+    }
+  }
+
+  // Método privado para verificar conectividad a internet de forma robusta
+  Future<bool> _checkInternetConnection() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        return true;
+      }
+      return false;
+    } on SocketException {
+      return false;
     }
   }
 }
