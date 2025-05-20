@@ -29,6 +29,30 @@ class _AddPostState extends State<AddPost> {
   final ChatGPTService _chatGptService =
       ChatGPTService(dotenv.env['KEY_ECOSPHERE']!);
   final LruMap<String, String> _suggestedTextCache = LruMap(maximumSize: 5);
+  DateTime? _entryTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _entryTime = DateTime.now();
+  }
+
+  void _sendBQ() {
+    if (_entryTime != null) {
+      final duration = DateTime.now().difference(_entryTime!);
+      SharedPreferences.getInstance().then((prefs) {
+        String? user = prefs.getString('username');
+        // VIVAVOCE: BQ What is the average time users spend adding a post?
+        if (user != null) {
+          FirebaseFirestore.instance
+              .collection('timeAddPost')
+              .doc('user-${FieldValue.serverTimestamp()}')
+              .set({'duration_in_seconds': duration.inSeconds});
+        }
+      });
+    }
+    super.dispose();
+  }
 
   Future<void> _pickImageFromCamera() async {
     final XFile? pickedFile =
@@ -427,6 +451,7 @@ class _AddPostState extends State<AddPost> {
                 SizedBox(height: 10),
                 ElevatedButton(
                   onPressed: () {
+                    _sendBQ();
                     Navigator.pushNamed(context, '/index');
                   },
                   style: ElevatedButton.styleFrom(
