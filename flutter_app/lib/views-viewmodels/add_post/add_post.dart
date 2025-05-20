@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecosphere/repositories/posts_repository.dart';
+import 'package:ecosphere/services/chat_gpt_service.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AddPost extends StatefulWidget {
   const AddPost({super.key});
@@ -22,6 +24,8 @@ class _AddPostState extends State<AddPost> {
   File? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   final PostsRepository repository = PostsRepository();
+  final ChatGPTService _chatGptService =
+      ChatGPTService(dotenv.env['KEY_ECOSPHERE']!);
 
   Future<void> _pickImageFromCamera() async {
     final XFile? pickedFile =
@@ -344,6 +348,49 @@ class _AddPostState extends State<AddPost> {
                                                   style: TextStyle(
                                                       color: Color(0xFF03898C)),
                                                 ),
+                                                SizedBox(width: 10),
+                                                ElevatedButton(
+                                                  onPressed: () async {
+                                                    String suggestedText =
+                                                        await _getSuggestedTextFromImage(
+                                                            _selectedImage!);
+                                                    if (!mounted) return;
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (context) =>
+                                                          AlertDialog(
+                                                        title: Text(
+                                                            'Add suggested caption?'),
+                                                        content: Text(suggestedText
+                                                                .isNotEmpty
+                                                            ? suggestedText
+                                                            : 'Could not genertae text for this image...'),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop();
+                                                            },
+                                                            child: Text('No'),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () {
+                                                              _textController
+                                                                      .text =
+                                                                  suggestedText;
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop();
+                                                            },
+                                                            child: Text('Yes'),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: Text('Sugerir texto'),
+                                                ),
                                               ],
                                             )
                                           : SizedBox(width: 10),
@@ -394,5 +441,9 @@ class _AddPostState extends State<AddPost> {
         ),
       ),
     );
+  }
+
+  _getSuggestedTextFromImage(File file) async {
+    return await _chatGptService.generateCaption(file);
   }
 }

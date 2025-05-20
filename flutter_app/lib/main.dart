@@ -134,7 +134,7 @@ class MyApp extends StatelessWidget {
           },
         ),
       ),
-      initialRoute: '/',
+      initialRoute: '/index',
       routes: Routes.routes,
     );
   }

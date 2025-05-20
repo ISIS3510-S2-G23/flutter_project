@@ -138,6 +138,81 @@ class ChatGPTService {
       isProcessing.value = false;
     }
   }
+
+  Future<String?> generateCaption(File imageFile) async {
+    try {
+      // Activar el indicador de procesamiento
+      isProcessing.value = true;
+
+      // Mostrar toast informativo
+      Fluttertoast.showToast(
+          msg: 'Processing your image...',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.black54,
+          textColor: Colors.white);
+
+      // Leer la imagen y convertirla a base64
+      final List<int> imageBytes = await imageFile.readAsBytes();
+      final String base64Image = base64Encode(imageBytes);
+
+      final response = await http.post(
+        Uri.parse(_visionApiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $apiKey',
+        },
+        body: json.encode({
+          'model':
+              'gpt-4o', // Cambiado a gpt-4o que tiene capacidades de visión
+          'messages': [
+            {
+              'role': 'user',
+              'content': [
+                {
+                  'type': 'text',
+                  'text':
+                      'Generate a caption for the image. The caption should be a short description of the main action or object in the image. Please provide a concise and clear caption. is for social media, and should be in english'
+                },
+                {
+                  'type': 'image_url',
+                  'image_url': {'url': 'data:image/jpeg;base64,$base64Image'}
+                }
+              ]
+            }
+          ],
+          'max_tokens': 50
+        }),
+      );
+
+      // Desactivar el indicador de procesamiento
+      isProcessing.value = false;
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final content = data['choices'][0]['message']['content']
+            ?.toString()
+            .trim()
+            .toUpperCase();
+        return content;
+      } else {
+        // Error en la API
+        Fluttertoast.showToast(
+            msg: 'API Error: ${response.statusCode}',
+            backgroundColor: Color(0xFFDCA8A8));
+        return null;
+      }
+    } catch (e) {
+      // Desactivar el indicador de procesamiento en caso de error
+      isProcessing.value = false;
+
+      // Manejo de error
+      Fluttertoast.showToast(
+          msg: 'Error processing image: $e',
+          backgroundColor: Color(0xFFDCA8A8));
+      return null;
+    }
+  }
 }
 
 String summarizeResponse(String fullText) {
