@@ -1,8 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
-import 'package:cached_network_image/cached_network_image.dart'; // Nueva importación
+import 'package:cached_network_image/cached_network_image.dart';
 
 // Importaciones para los botones de comentarios y upvotes
 import 'comments_button.dart';
@@ -35,6 +34,11 @@ class _HomeState extends State<Home> {
 
   // Instancia del repositorio
   final PostsRepository _postsRepository = PostsRepository();
+
+  // Microopt: cache simple para el filtro
+  List<PostModel>? _lastPosts;
+  String? _lastQuery;
+  List<PostModel>? _lastFiltered;
 
   @override
   void initState() {
@@ -86,8 +90,6 @@ class _HomeState extends State<Home> {
             const SizedBox(height: 16),
             _buildTagChips(),
             const SizedBox(height: 16),
-
-            /* ---------------- LISTA DE POSTS ---------------- */
             Expanded(
               child: StreamBuilder<List<PostModel>>(
                 stream: _postsRepository.getPosts(tag: _selectedChip),
@@ -100,21 +102,24 @@ class _HomeState extends State<Home> {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   }
 
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  final posts = snapshot.data ?? const <PostModel>[];
+                  if (posts.isEmpty) {
                     return const Center(child: Text('No posts available'));
                   }
 
-                  final posts = snapshot.data!;
-                  final filtered = _applySearchFilter(posts);
+                  final filtered = _applySearchFilterCached(posts);
 
                   if (filtered.isEmpty) {
                     return const Center(
                         child: Text('No posts match your search'));
                   }
 
-                  return ListView.builder(
+                  return ListView.separated(
                     itemCount: filtered.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, index) => _postCard(filtered[index]),
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.zero,
                   );
                 },
               ),
@@ -195,13 +200,23 @@ class _HomeState extends State<Home> {
     );
   }
 
-  List<PostModel> _applySearchFilter(List<PostModel> posts) {
+  // Microopt: cachea el filtro si no cambian los datos ni la búsqueda
+  List<PostModel> _applySearchFilterCached(List<PostModel> posts) {
+    if (_lastPosts == posts &&
+        _lastQuery == _searchQuery &&
+        _lastFiltered != null) {
+      return _lastFiltered!;
+    }
     final q = _searchQuery.toLowerCase();
-    return posts.where((post) {
+    final filtered = posts.where((post) {
       final title = post.title.toLowerCase();
       final text = post.text.toLowerCase();
       return title.contains(q) || text.contains(q);
     }).toList();
+    _lastPosts = posts;
+    _lastQuery = _searchQuery;
+    _lastFiltered = filtered;
+    return filtered;
   }
 
   // Método auxiliar para obtener URL de la imagen
@@ -233,7 +248,7 @@ class _HomeState extends State<Home> {
     final tags = post.tags.join(', ');
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 2,
       child: Padding(
@@ -267,7 +282,7 @@ class _HomeState extends State<Home> {
             const SizedBox(height: 8),
             Text(post.text, style: const TextStyle(fontSize: 13)),
 
-            // AQUÍ ESTÁ EL CAMBIO PRINCIPAL: Uso de CachedNetworkImage
+            // Imagen con cache
             if (post.asset.isNotEmpty) ...[
               const SizedBox(height: 8),
               SizedBox(
