@@ -1,29 +1,89 @@
 import 'dart:convert';
+import 'dart:io'; // Para operaciones de archivo
 import 'package:http/http.dart' as http;
-import 'notification_model.dart'; // Adjust path if your model is elsewhere
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // For API key
-import 'package:uuid/uuid.dart'; // For generating unique IDs
+import 'package:path_provider/path_provider.dart'; // Para path_provider
+import 'notification_model.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:uuid/uuid.dart';
 
 class NotificationService {
-  // Your OpenAI API endpoint for chat completions
   final String _baseUrl = 'https://api.openai.com/v1/chat/completions';
-  
-  // IMPORTANT: Load your API key securely, e.g., using flutter_dotenv
-  // Add OPENAI_API_KEY=your_actual_key to your .env file
   final String _apiKey = dotenv.env['KEY_ECOSPHERE'] ?? 'YOUR_OPENAI_API_KEY_FALLBACK';
-
   final Uuid _uuid = Uuid();
 
+  List<NotificationModel> _notificationsCache = [];
+  static const String _storageFileName = 'notifications_cache.json';
+  static const int _maxCacheSize = 100;
+  bool _isInitialized = false;
+
+  // Método para inicializar el servicio (cargar desde archivo)
+  Future<void> initializeService() async {
+    if (_isInitialized) return;
+    await _loadNotificationsFromFile();
+    _isInitialized = true;
+    print("NotificationService initialized. Cache size: ${_notificationsCache.length}");
+  }
+
+  Future<File> get _localFile async {
+    final directory = await getApplicationDocumentsDirectory();
+    final path = directory.path;
+    return File('$path/$_storageFileName');
+  }
+
+  Future<void> _loadNotificationsFromFile() async {
+    try {
+      final file = await _localFile;
+      if (await file.exists()) {
+        final contents = await file.readAsString();
+        if (contents.isNotEmpty) {
+          final List<dynamic> jsonData = json.decode(contents);
+          _notificationsCache = jsonData
+              .map((item) => NotificationModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+          // Asegurar orden y límite
+          _notificationsCache.sort((a, b) => b.timestamp.compareTo(a.timestamp)); // Más nuevas primero
+          if (_notificationsCache.length > _maxCacheSize) {
+            _notificationsCache = _notificationsCache.sublist(0, _maxCacheSize);
+          }
+        }
+         print("Notifications loaded from file. Count: ${_notificationsCache.length}");
+      } else {
+        print("Notification cache file does not exist. Starting with empty cache.");
+      }
+    } catch (e) {
+      print('Error loading notifications from file: $e');
+      _notificationsCache = []; // Empezar con caché vacía en caso de error
+    }
+  }
+
+  Future<void> _saveNotificationsToFile() async {
+    try {
+      final file = await _localFile;
+      // Convertir la lista de NotificationModel a una lista de Mapas (JSON)
+      final List<Map<String, dynamic>> jsonData =
+          _notificationsCache.map((notification) => notification.toJson()).toList();
+      await file.writeAsString(json.encode(jsonData));
+      print("Notifications saved to file. Count: ${_notificationsCache.length}");
+    } catch (e) {
+      print('Error saving notifications to file: $e');
+    }
+  }
+
   Future<List<NotificationModel>> fetchNotifications() async {
-    if (_apiKey == 'YOUR_OPENAI_API_KEY_FALLBACK' || _apiKey.isEmpty) {
-      print('Error: OpenAI API Key not found. Please set it in your .env file.');
-      // Return empty list or throw specific error to show in UI
-      // For now, returning mock data to avoid app crash if key is missing
-      return _getMockNotificationsOnError();
+    if (!_isInitialized) {
+      // Esto no debería pasar si initializeService se llama correctamente
+      print("Warning: fetchNotifications called before service initialization.");
+      await initializeService();
     }
 
-    // This is where you tell ChatGPT what kind of notifications to generate.
-    // You want it to return a JSON string that can be parsed into a list of notifications.
+    if (_apiKey == 'YOUR_OPENAI_API_KEY_FALLBACK' || _apiKey.isEmpty) {
+      print('Error: OpenAI API Key not found. Using cached/mock data.');
+      if (_notificationsCache.isNotEmpty) {
+        return List.from(_notificationsCache); // Devuelve una copia de la caché
+      }
+      return _getMockNotificationsOnError(); // O mock si la caché está vacía
+    }
+
     final String prompt = """
     Generate 1 diverse, concise, and engaging news updates suitable for app notifications.
     Each update should be fictional and general interest (e.g., recycling, transport, positive news).
@@ -33,11 +93,9 @@ class NotificationService {
 
     Example of the desired JSON output format:
     [
-      {"title": "New Planet Discovery", "body": "Astronomers have discovered a new Earth-like planet in a nearby galaxy, sparking hopes for future exploration."},
-      {"title": "Tech Breakthrough in AI", "body": "A new AI model can now generate realistic images from complex text descriptions with unprecedented accuracy."},
-      {"title": "Global Art Initiative", "body": "Artists worldwide are collaborating on a digital art project to promote peace and understanding across cultures."}
+      {"title": "New Urban Mobility Solution", "body": "Eco-friendly electric scooters are now available city-wide, aiming to reduce traffic congestion and pollution."}
     ]
-    """;
+    """; // Ajustado para pedir 1 y con ejemplo de 1
 
     try {
       final response = await http.post(
@@ -47,84 +105,81 @@ class NotificationService {
           'Authorization': 'Bearer $_apiKey',
         },
         body: json.encode({
-          'model': 'gpt-3.5-turbo', // Or 'gpt-4o', 'gpt-4-turbo'
-          'messages': [
-            // Optional: A system message can help set the context for the AI
-            // {"role": "system", "content": "You are an assistant that generates news notifications in JSON format."},
-            {"role": "user", "content": prompt}
-          ],
-          'temperature': 0.7, // Adjust for creativity vs. determinism
-          'max_tokens': 300,  // Adjust based on expected length of 3 notifications
-          // For newer models, you can enforce JSON output:
-          // 'response_format': { 'type': 'json_object' } // Ensure your model supports this
+          'model': 'gpt-3.5-turbo',
+          'messages': [{"role": "user", "content": prompt}],
+          'temperature': 0.8, // Un poco más de creatividad
+          'max_tokens': 150, // Ajustado para 1-2 notificaciones
         }),
       );
 
       if (response.statusCode == 200) {
-        final responseBody = json.decode(utf8.decode(response.bodyBytes)); // Use utf8.decode for proper character handling
-        
+        final responseBody = json.decode(utf8.decode(response.bodyBytes));
         if (responseBody['choices'] != null && responseBody['choices'].isNotEmpty) {
           String content = responseBody['choices'][0]['message']['content'];
-          
-          // The content might be a stringified JSON array. We need to parse it.
-          // Sometimes the API might wrap the JSON in backticks or add explanations.
-          // Basic cleanup:
           content = content.trim();
-          if (content.startsWith('```json')) {
-            content = content.substring(7);
-          }
-          if (content.endsWith('```')) {
-            content = content.substring(0, content.length - 3);
-          }
+          if (content.startsWith('```json')) content = content.substring(7);
+          if (content.endsWith('```')) content = content.substring(0, content.length - 3);
           content = content.trim();
 
-          try {
-            final List<dynamic> jsonData = json.decode(content);
-            List<NotificationModel> notifications = jsonData.map((item) {
-              return NotificationModel(
-                id: _uuid.v4(), // Generate a unique ID
-                title: item['title'] as String? ?? 'No Title',
-                body: item['body'] as String? ?? 'No Body',
-                timestamp: DateTime.now(), // Set current time for new notifications
-              );
-            }).toList();
-            return notifications;
-          } catch (e) {
-            print('Error parsing JSON content from ChatGPT: $e');
-            print('Received content: $content');
-            throw Exception('Failed to parse notifications from API response.');
+          final List<dynamic> newJsonData = json.decode(content);
+          List<NotificationModel> newApiNotifications = newJsonData.map((item) {
+            return NotificationModel(
+              id: _uuid.v4(),
+              title: item['title'] as String? ?? 'No Title',
+              body: item['body'] as String? ?? 'No Body',
+              timestamp: DateTime.now(),
+            );
+          }).toList();
+
+          // Agregar nuevas notificaciones al inicio de la caché
+          _notificationsCache.insertAll(0, newApiNotifications);
+          // Ordenar por fecha (más nuevas primero)
+          _notificationsCache.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          // Limitar al tamaño máximo
+          if (_notificationsCache.length > _maxCacheSize) {
+            _notificationsCache = _notificationsCache.sublist(0, _maxCacheSize);
           }
+          await _saveNotificationsToFile(); // Guardar la caché actualizada
+          print("Fetched new notifications. Cache size: ${_notificationsCache.length}");
+          return List.from(_notificationsCache); // Devuelve una copia
         } else {
-          print('No choices found in API response: ${response.body}');
           throw Exception('No content returned from API.');
         }
       } else {
-        print('API Error: ${response.statusCode}');
-        print('Response body: ${response.body}');
+        print('API Error: ${response.statusCode}, Body: ${response.body}');
+        // Si la API falla, pero tenemos caché, devolvemos la caché
+        if (_notificationsCache.isNotEmpty) {
+          print("API error, returning cached notifications.");
+          return List.from(_notificationsCache);
+        }
         throw Exception('Failed to load notifications from server (Status code: ${response.statusCode})');
       }
     } catch (e) {
-      print('Error fetching notifications: $e');
-      // Fallback or rethrow
-      // return _getMockNotificationsOnError(); // Optionally return mock data on error
-      throw Exception('Failed to fetch notifications: $e');
+      print('Error fetching or processing notifications: $e');
+      // Si cualquier cosa falla, pero tenemos caché, devolvemos la caché
+      if (_notificationsCache.isNotEmpty) {
+         print("General error, returning cached notifications.");
+        return List.from(_notificationsCache);
+      }
+      // Si no hay caché y hay error, devolvemos mock o lanzamos la excepción
+      // return _getMockNotificationsOnError(); 
+      throw Exception('Failed to fetch notifications: $e. No cache available.');
     }
   }
-
-  // Helper for mock data if API key is missing or an error occurs
+// ... _getMockNotificationsOnError() permanece igual ...
   List<NotificationModel> _getMockNotificationsOnError() {
-    print("Falling back to mock notifications due to an error or missing API key.");
+    print("Falling back to mock notifications due to an error or missing API key/cache.");
     return [
       NotificationModel(
         id: 'mock-1',
-        title: 'API Key Missing or Error',
-        body: 'Please check your OpenAI API key or network connection. Displaying mock data.',
+        title: 'Service Unavailable',
+        body: 'Could not fetch new updates. Displaying placeholder content.',
         timestamp: DateTime.now(),
       ),
       NotificationModel(
         id: 'mock-2',
-        title: 'Local Weather Update',
-        body: 'Expect sunny skies today with a high of 25°C. Perfect day for outdoor activities!',
+        title: 'Tip of the Day',
+        body: 'Remember to stay hydrated and take short breaks if working long hours!',
         timestamp: DateTime.now().subtract(const Duration(hours: 1)),
       ),
     ];
