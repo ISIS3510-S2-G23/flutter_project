@@ -473,11 +473,11 @@ class _AddPostState extends State<AddPost> {
     final key = file.path.hashCode.toString();
     final List<int> imageBytes = await file.readAsBytes();
     final File savedFile = await saveFileLocally(imageBytes, key);
+    // VIVAVOCE: cache -> hace cache fb to network, y si no, se vuelve network only
     if (_suggestedTextCache.containsKey(key)) {
       return _suggestedTextCache[key]!;
     }
     // VIVAVOCE: compute -> uso de un nuevo thread ISOLATE
-    // hace cache fb to network, y si no, se vuelve network only
     final result = await compute(generateCaptionIsolate, {
       'apiKey': dotenv.env['KEY_ECOSPHERE'],
       'filePath': savedFile.path,
@@ -496,8 +496,10 @@ class _AddPostState extends State<AddPost> {
   }
 
   Future<File> saveFileLocally(List<int> bytes, String filename) async {
+    // VIVAVOCE: Local storage -> uso de local storge PathUtils para guardar las imágenes
     final directory = await getApplicationDocumentsDirectory();
     final file = File('${directory.path}/$filename');
+    await file.writeAsBytes(bytes);
     return file;
   }
 }
