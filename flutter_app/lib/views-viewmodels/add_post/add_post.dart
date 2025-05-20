@@ -361,7 +361,7 @@ class _AddPostState extends State<AddPost> {
                                               Icon(Icons.add_a_photo_outlined),
                                           onPressed: () =>
                                               _showPicker(context)),
-                                      _selectedImage == null
+                                      _selectedImage != null
                                           ? Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment.center,
