@@ -2,28 +2,25 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecosphere/repositories/posts_repository.dart';
-// No necesitas importar ChatGPTService aquí si generateCaptionIsolateForCompute es autocontenido
-// import 'package:ecosphere/services/chat_gpt_service.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http; // Necesario para la llamada HTTP en el isolate
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:quiver/collection.dart';
-import 'package:path_provider/path_provider.dart';
 
-// --- INICIO DE LA FUNCIÓN DE NIVEL SUPERIOR PARA EL ISOLATE ---
-// Esta función debe estar fuera de cualquier clase.
-Future<String?> generateCaptionIsolateForCompute(Map<String, dynamic> args) async {
+Future<String?> generateCaptionIsolateForCompute(
+    Map<String, dynamic> args) async {
   final String? apiKey = args['apiKey'] as String?;
   final String filePath = args['filePath'] as String;
   const String visionApiUrl = 'https://api.openai.com/v1/chat/completions';
 
   if (apiKey == null || apiKey.isEmpty) {
     print('Isolate: OpenAI API Key is missing or empty.');
-    return null; // O un mensaje de error predeterminado
+    return null;
   }
 
   try {
@@ -42,14 +39,15 @@ Future<String?> generateCaptionIsolateForCompute(Map<String, dynamic> args) asyn
         'Authorization': 'Bearer $apiKey',
       },
       body: json.encode({
-        'model': 'gpt-4o', // O 'gpt-4-vision-preview' u otro modelo con capacidad de visión
+        'model': 'gpt-4o',
         'messages': [
           {
             'role': 'user',
             'content': [
               {
                 'type': 'text',
-                'text': "Generate a short, engaging caption for this image, suitable for a social media post. Focus on themes of nature, environment, or sustainability if applicable. If not, a general positive caption. Max 30 words."
+                'text':
+                    "Generate a short, engaging caption for this image, suitable for a social media post. Focus on themes of nature, environment, or sustainability if applicable. If not, a general positive caption. Max 30 words."
               },
               {
                 'type': 'image_url',
@@ -58,35 +56,35 @@ Future<String?> generateCaptionIsolateForCompute(Map<String, dynamic> args) asyn
             ]
           }
         ],
-        'max_tokens': 60 // Ajusta según la longitud esperada de la respuesta
+        'max_tokens': 60
       }),
     );
 
     if (response.statusCode == 200) {
-      final data = json.decode(utf8.decode(response.bodyBytes)); // Usar utf8.decode para caracteres especiales
-      if (data['choices'] != null && data['choices'].isNotEmpty &&
+      final data = json.decode(utf8.decode(response.bodyBytes));
+      if (data['choices'] != null &&
+          data['choices'].isNotEmpty &&
           data['choices'][0]['message'] != null &&
           data['choices'][0]['message']['content'] != null) {
         return data['choices'][0]['message']['content']?.toString().trim();
       } else {
-        print('Isolate: Invalid response structure from OpenAI API: ${response.body}');
+        print(
+            'Isolate: Invalid response structure from OpenAI API: ${response.body}');
         return "Could not extract caption from API response.";
       }
     } else {
-      print('Isolate: Error generating caption - Status ${response.statusCode}: ${response.body}');
+      print(
+          'Isolate: Error generating caption - Status ${response.statusCode}: ${response.body}');
       return "API error: Could not generate caption.";
     }
   } catch (e, s) {
     print('Isolate: Exception generating caption: $e');
     print('Isolate: Stacktrace: $s');
-    // Considerar no enviar FirebaseCrashlytics desde el isolate directamente
-    // si causa problemas, aunque errores simples deberían estar bien.
-    // FirebaseCrashlytics.instance.recordError(e, s, reason: 'Error in generateCaptionIsolateForCompute');
+    ;
     return "Exception occurred while generating caption.";
   }
 }
 // --- FIN DE LA FUNCIÓN DE NIVEL SUPERIOR PARA EL ISOLATE ---
-
 
 class AddPost extends StatefulWidget {
   const AddPost({super.key});
@@ -113,14 +111,14 @@ class _AddPostState extends State<AddPost> {
 
   @override
   void dispose() {
-    // _sendBQ(); // Considera si quieres enviar esto solo al salir de la pantalla, no al cerrar el post
     _titleTextController.dispose();
     _textController.dispose();
     _tagsController.dispose();
     super.dispose();
   }
 
-  void _sendBQOnExit() { // Renombrado para claridad
+// VIVAVOCE -> BQ
+  void _sendBQOnExit() {
     if (_entryTime != null) {
       final duration = DateTime.now().difference(_entryTime!);
       SharedPreferences.getInstance().then((prefs) {
@@ -128,7 +126,7 @@ class _AddPostState extends State<AddPost> {
         if (user != null) {
           FirebaseFirestore.instance
               .collection('timeAddPost')
-              .doc('user-$user-${DateTime.now().millisecondsSinceEpoch}') // Incluir user y timestamp único
+              .doc('user-$user-${DateTime.now().millisecondsSinceEpoch}')
               .set({'duration_in_seconds': duration.inSeconds, 'user': user});
         }
       });
@@ -199,12 +197,14 @@ class _AddPostState extends State<AddPost> {
         var jsonResponse = json.decode(responseData);
         return jsonResponse["secure_url"];
       } else {
-        print("Cloudinary upload error: ${response.statusCode} - ${await response.stream.bytesToString()}");
+        print(
+            "Cloudinary upload error: ${response.statusCode} - ${await response.stream.bytesToString()}");
         return null;
       }
     } catch (e, s) {
       print("Exception during Cloudinary upload: $e");
-      FirebaseCrashlytics.instance.recordError(e, s, reason: "Cloudinary Upload Failed");
+      FirebaseCrashlytics.instance
+          .recordError(e, s, reason: "Cloudinary Upload Failed");
       return null;
     }
   }
@@ -231,15 +231,16 @@ class _AddPostState extends State<AddPost> {
     String? user = prefs.getString('username');
 
     if (user == null) {
-      FirebaseCrashlytics.instance.log("No user found in SharedPreferences during post upload");
+      FirebaseCrashlytics.instance
+          .log("No user found in SharedPreferences during post upload");
       FirebaseCrashlytics.instance.recordError(
-        Exception("User not found in SharedPreferences for post upload"),
-        null,
-        fatal: true
-      );
+          Exception("User not found in SharedPreferences for post upload"),
+          null,
+          fatal: true);
       if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User session error. Please log in again.')),
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('User session error. Please log in again.')),
         );
       }
       return false;
@@ -251,7 +252,8 @@ class _AddPostState extends State<AddPost> {
       if (imageUrl == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to upload image. Please try again.')),
+            const SnackBar(
+                content: Text('Failed to upload image. Please try again.')),
           );
         }
         return false;
@@ -268,13 +270,15 @@ class _AddPostState extends State<AddPost> {
         'tags': tags,
         'user': user,
         'timestamp': FieldValue.serverTimestamp(),
-        if (imageUrl != null) 'asset': imageUrl, // Solo añade 'asset' si hay imagen
+        if (imageUrl != null)
+          'asset': imageUrl, // Solo añade 'asset' si hay imagen
         'comments': [], // Inicializar con lista vacía de comentarios
       });
       return true;
     } catch (e, s) {
       print("Error uploading post to Firebase: $e");
-      FirebaseCrashlytics.instance.recordError(e, s, reason: "Firebase Post Upload Failed");
+      FirebaseCrashlytics.instance
+          .recordError(e, s, reason: "Firebase Post Upload Failed");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to create post: ${e.toString()}')),
@@ -340,19 +344,24 @@ class _AddPostState extends State<AddPost> {
                                     ),
                                   ),
                                   const SizedBox(height: 10),
-                                  Expanded( // Para que el TextField de texto ocupe el espacio restante
+                                  Expanded(
+                                    // Para que el TextField de texto ocupe el espacio restante
                                     child: TextField(
                                       controller: _textController,
                                       decoration: const InputDecoration(
                                         hintText:
                                             'Tell us here your green thoughts ♻️😁',
-                                        hintStyle: TextStyle(color: Colors.grey),
+                                        hintStyle:
+                                            TextStyle(color: Colors.grey),
                                         border: InputBorder.none,
                                       ),
-                                      maxLines: null, // Permite múltiples líneas dinámicamente
-                                      expands: true, // Se expande para llenar el espacio vertical
+                                      maxLines:
+                                          null, // Permite múltiples líneas dinámicamente
+                                      expands:
+                                          true, // Se expande para llenar el espacio vertical
                                       keyboardType: TextInputType.multiline,
-                                      textAlignVertical: TextAlignVertical.top, // Alinea el texto al inicio
+                                      textAlignVertical: TextAlignVertical
+                                          .top, // Alinea el texto al inicio
                                     ),
                                   ),
                                 ],
@@ -362,9 +371,12 @@ class _AddPostState extends State<AddPost> {
                             Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Wrap( // Usar Wrap para los FilterChip para que se ajusten
-                                    spacing: 8.0, // Espacio horizontal entre chips
-                                    runSpacing: 4.0, // Espacio vertical si hay múltiples líneas
+                                  Wrap(
+                                    // Usar Wrap para los FilterChip para que se ajusten
+                                    spacing:
+                                        8.0, // Espacio horizontal entre chips
+                                    runSpacing:
+                                        4.0, // Espacio vertical si hay múltiples líneas
                                     alignment: WrapAlignment.center,
                                     children: [
                                       FilterChip(
@@ -378,20 +390,29 @@ class _AddPostState extends State<AddPost> {
                                           color: _tagsController.text
                                                   .contains('Recycle')
                                               ? Colors.white
-                                              : Colors.black87, // Color de texto no seleccionado
+                                              : Colors
+                                                  .black87, // Color de texto no seleccionado
                                         ),
-                                        backgroundColor: _tagsController.text.contains('Recycle') ? const Color(0xFF64C533) : const Color(0xFFB9DCA8),
+                                        backgroundColor: _tagsController.text
+                                                .contains('Recycle')
+                                            ? const Color(0xFF64C533)
+                                            : const Color(0xFFB9DCA8),
                                         selectedColor: const Color(0xFF64C533),
                                         selected: _tagsController.text
                                             .contains('Recycle'),
                                         showCheckmark: false,
                                         onSelected: (bool selected) {
                                           setState(() {
-                                            String currentTags = _tagsController.text;
+                                            String currentTags =
+                                                _tagsController.text;
                                             if (selected) {
-                                              if (!currentTags.contains('Recycle,')) _tagsController.text += 'Recycle,';
+                                              if (!currentTags
+                                                  .contains('Recycle,'))
+                                                _tagsController.text +=
+                                                    'Recycle,';
                                             } else {
-                                              _tagsController.text = currentTags.replaceAll('Recycle,', '');
+                                              _tagsController.text = currentTags
+                                                  .replaceAll('Recycle,', '');
                                             }
                                           });
                                         },
@@ -409,24 +430,33 @@ class _AddPostState extends State<AddPost> {
                                               ? Colors.white
                                               : Colors.black87,
                                         ),
-                                        backgroundColor: _tagsController.text.contains('Upcycle') ? const Color(0xFF3D5CFF) : const Color(0xFFA8B7DC),
+                                        backgroundColor: _tagsController.text
+                                                .contains('Upcycle')
+                                            ? const Color(0xFF3D5CFF)
+                                            : const Color(0xFFA8B7DC),
                                         selectedColor: const Color(0xFF3D5CFF),
                                         selected: _tagsController.text
                                             .contains('Upcycle'),
                                         showCheckmark: false,
                                         onSelected: (bool selected) {
                                           setState(() {
-                                            String currentTags = _tagsController.text;
+                                            String currentTags =
+                                                _tagsController.text;
                                             if (selected) {
-                                               if (!currentTags.contains('Upcycle,')) _tagsController.text += 'Upcycle,';
+                                              if (!currentTags
+                                                  .contains('Upcycle,'))
+                                                _tagsController.text +=
+                                                    'Upcycle,';
                                             } else {
-                                              _tagsController.text = currentTags.replaceAll('Upcycle,', '');
+                                              _tagsController.text = currentTags
+                                                  .replaceAll('Upcycle,', '');
                                             }
                                           });
                                         },
                                       ),
                                       FilterChip(
-                                        avatar: const Icon(Icons.directions_bike,
+                                        avatar: const Icon(
+                                            Icons.directions_bike,
                                             color: Colors.white),
                                         label: const Text(
                                           'Transport',
@@ -438,7 +468,11 @@ class _AddPostState extends State<AddPost> {
                                               ? Colors.white
                                               : Colors.black87,
                                         ),
-                                        backgroundColor: _tagsController.text.contains('Transport') ? const Color.fromARGB(255, 209, 46, 46) : const Color(0xFFDCA8A8),
+                                        backgroundColor: _tagsController.text
+                                                .contains('Transport')
+                                            ? const Color.fromARGB(
+                                                255, 209, 46, 46)
+                                            : const Color(0xFFDCA8A8),
                                         selectedColor: const Color.fromARGB(
                                             255, 209, 46, 46),
                                         selected: _tagsController.text
@@ -446,11 +480,16 @@ class _AddPostState extends State<AddPost> {
                                         showCheckmark: false,
                                         onSelected: (bool selected) {
                                           setState(() {
-                                            String currentTags = _tagsController.text;
+                                            String currentTags =
+                                                _tagsController.text;
                                             if (selected) {
-                                               if (!currentTags.contains('Transport,')) _tagsController.text += 'Transport,';
+                                              if (!currentTags
+                                                  .contains('Transport,'))
+                                                _tagsController.text +=
+                                                    'Transport,';
                                             } else {
-                                              _tagsController.text = currentTags.replaceAll('Transport,', '');
+                                              _tagsController.text = currentTags
+                                                  .replaceAll('Transport,', '');
                                             }
                                           });
                                         },
@@ -460,62 +499,78 @@ class _AddPostState extends State<AddPost> {
                                   Row(
                                     children: [
                                       IconButton(
-                                          icon:
-                                              const Icon(Icons.add_a_photo_outlined),
+                                          icon: const Icon(
+                                              Icons.add_a_photo_outlined),
                                           onPressed: () =>
                                               _showPicker(context)),
-                                      if (_selectedImage != null) // Usar if para mostrar condicionalmente
-                                        Expanded( // Para que el Row ocupe el espacio disponible
+                                      if (_selectedImage !=
+                                          null) // Usar if para mostrar condicionalmente
+                                        Expanded(
+                                          // Para que el Row ocupe el espacio disponible
                                           child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start, // Alinear al inicio
+                                            mainAxisAlignment: MainAxisAlignment
+                                                .start, // Alinear al inicio
                                             children: [
                                               const Icon(Icons.check_circle,
                                                   color: Color(0xFF03898C)),
                                               const SizedBox(width: 5),
-                                              const Flexible( // Para que el texto se ajuste
+                                              const Flexible(
+                                                // Para que el texto se ajuste
                                                 child: Text(
                                                   'Image selected', // Cambiado para claridad
                                                   style: TextStyle(
                                                       color: Color(0xFF03898C)),
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                               ),
                                               const SizedBox(width: 10),
                                               ElevatedButton(
                                                 onPressed: () async {
-                                                  if (_selectedImage == null) return;
+                                                  if (_selectedImage == null)
+                                                    return;
                                                   String suggestedText =
                                                       await _getSuggestedTextFromImage(
                                                           _selectedImage!);
-                                                  if (mounted) { // Verificar si el widget sigue montado
+                                                  if (mounted) {
+                                                    // Verificar si el widget sigue montado
                                                     showDialog(
                                                       context: context,
                                                       builder: (context) =>
                                                           AlertDialog(
                                                         title: const Text(
                                                             'Add suggested caption?'),
-                                                        content: Text(suggestedText), // Ya maneja el error en _getSuggestedTextFromImage
+                                                        content: Text(
+                                                            suggestedText), // Ya maneja el error en _getSuggestedTextFromImage
                                                         actions: [
                                                           TextButton(
                                                             onPressed: () {
-                                                              Navigator.of(context).pop();
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop();
                                                             },
-                                                            child: const Text('No'),
+                                                            child: const Text(
+                                                                'No'),
                                                           ),
                                                           TextButton(
                                                             onPressed: () {
-                                                              _textController.text = suggestedText;
-                                                              Navigator.of(context).pop();
+                                                              _textController
+                                                                      .text =
+                                                                  suggestedText;
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop();
                                                             },
-                                                            child: const Text('Yes'),
+                                                            child: const Text(
+                                                                'Yes'),
                                                           ),
                                                         ],
                                                       ),
                                                     );
                                                   }
                                                 },
-                                                child: const Text('Suggest caption'),
+                                                child: const Text(
+                                                    'Suggest caption'),
                                               ),
                                             ],
                                           ),
@@ -529,12 +584,16 @@ class _AddPostState extends State<AddPost> {
                                   bool success = await _uploadToFirebase();
                                   if (success && mounted) {
                                     _sendBQOnExit(); // Enviar BQ al salir con éxito
-                                    Navigator.pushNamedAndRemoveUntil(context, '/index', (route) => false); // Limpiar stack
+                                    Navigator.pushNamedAndRemoveUntil(
+                                        context,
+                                        '/index',
+                                        (route) => false); // Limpiar stack
                                   }
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFA8DADC),
-                                  padding: const EdgeInsets.symmetric(vertical: 20),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 20),
                                   minimumSize: const Size(double.infinity, 50),
                                   textStyle: const TextStyle(
                                       color: Color(0xFF49447E),
@@ -552,12 +611,14 @@ class _AddPostState extends State<AddPost> {
                 ElevatedButton(
                   onPressed: () {
                     _sendBQOnExit(); // Enviar BQ al presionar el botón de cerrar
-                    Navigator.pushNamedAndRemoveUntil(context, '/index', (route) => false); // Limpiar stack
+                    Navigator.pushNamedAndRemoveUntil(
+                        context, '/index', (route) => false); // Limpiar stack
                   },
                   style: ElevatedButton.styleFrom(
                     shape: const CircleBorder(),
                     padding: const EdgeInsets.all(20),
-                    backgroundColor: Colors.white, // Fondo blanco para el botón de cerrar
+                    backgroundColor:
+                        Colors.white, // Fondo blanco para el botón de cerrar
                   ),
                   child: const Icon(
                     Icons.close,
@@ -573,37 +634,39 @@ class _AddPostState extends State<AddPost> {
   }
 
   Future<String> _getSuggestedTextFromImage(File file) async {
-    final key = file.path.hashCode.toString(); // Usar algo más robusto si es necesario, como el path
-    
+    final key = file.path.hashCode
+        .toString(); // Usar algo más robusto si es necesario, como el path
+
+    // VIVAVOCE: Local storage -> uso de local storge PathUtils para guardar las imágenes
+    saveFileLocally(file.readAsBytesSync(), file.path.split('/').last);
     // VIVAVOCE: cache -> hace cache fb to network, y si no, se vuelve network only
     if (_suggestedTextCache.containsKey(key)) {
       return _suggestedTextCache[key]!;
     }
 
-    // No es necesario guardar el archivo localmente de nuevo si ya tienes el `File file`
-    // final List<int> imageBytes = await file.readAsBytes();
-    // final File savedFile = await saveFileLocally(imageBytes, key);
-
-    // VIVAVOCE: compute -> uso de un nuevo thread ISOLATE
-    // Llama a la nueva función de nivel superior
+// VIVAVOCE -> Multithreading compute -> isolate
     final String? result = await compute(generateCaptionIsolateForCompute, {
-      'apiKey': dotenv.env['KEY_ECOSPHERE'], // Asegúrate que esta es tu clave de API de OpenAI
-      'filePath': file.path, // Usar el path del archivo original
+      'apiKey': dotenv.env['KEY_ECOSPHERE'],
+      'filePath': file.path,
     });
 
-    final String caption = result ?? "Could not generate caption for this image.";
+    final String caption =
+        result ?? "Could not generate caption for this image.";
     // VIVAVOCE: LRU cache -> uso de cache para no generar de nuevo el caption si ya se había generado
     _suggestedTextCache[key] = caption;
     return caption;
   }
 
-  // La función saveFileLocally puede que ya no sea necesaria aquí si solo la usabas para el isolate
-  // y ahora pasas el path directamente. Si la usas para otra cosa, mantenla.
-  // Future<File> saveFileLocally(List<int> bytes, String filename) async {
-  //   // VIVAVOCE: Local storage -> uso de local storge PathUtils para guardar las imágenes
-  //   final directory = await getApplicationDocumentsDirectory();
-  //   final file = File('${directory.path}/$filename');
-  //   await file.writeAsBytes(bytes);
-  //   return file;
-  // }
+  Future<File> saveFileLocally(List<int> bytes, String filename) async {
+    // VIVAVOCE: Local storage -> uso de local storge PathUtils para guardar las imágenes
+    try {
+      final directory = await getTemporaryDirectory();
+      final file = File('${directory.path}/$filename');
+      await file.writeAsBytes(bytes);
+      return file;
+    } catch (e) {
+      print('Error saving file locally: $e');
+      throw Exception('Error saving file locally: $e');
+    }
+  }
 }
