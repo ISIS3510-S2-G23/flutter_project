@@ -138,6 +138,109 @@ class ChatGPTService {
       isProcessing.value = false;
     }
   }
+
+  Future<String?> generateCaption(File imageFile) async {
+    try {
+      // VIVAVOCE: EC -> no internet connection, en su llamado, inicia en cache fb a network
+      final bool hasConnection = await _checkInternetConnection();
+      if (!hasConnection) {
+        Fluttertoast.showToast(
+            msg: 'No internet connection. Cannot generate captions.',
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Color(0xFFDCA8A8),
+            textColor: Colors.white);
+        return null;
+      }
+
+      // Activar el indicador de procesamiento
+      isProcessing.value = true;
+
+      // Mostrar toast informativo
+      Fluttertoast.showToast(
+          msg: 'Processing your image...',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.black54,
+          textColor: Colors.white);
+
+      // Leer la imagen y convertirla a base64
+      final List<int> imageBytes = await imageFile.readAsBytes();
+      final String base64Image = base64Encode(imageBytes);
+
+      final response = await http.post(
+        Uri.parse(_visionApiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $apiKey',
+        },
+        body: json.encode({
+          'model': 'gpt-4o',
+          'messages': [
+            {
+              'role': 'user',
+              'content': [
+                {
+                  'type': 'text',
+                  'text':
+                      'Generate a caption for the image. The caption should be a short description of the main action or object in the image. Please provide a concise and clear caption. is for social media, and should be in english'
+                },
+                {
+                  'type': 'image_url',
+                  'image_url': {'url': 'data:image/jpeg;base64,$base64Image'}
+                }
+              ]
+            }
+          ],
+          'max_tokens': 50
+        }),
+      );
+
+      // Desactivar el indicador de procesamiento
+      isProcessing.value = false;
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final content = data['choices'][0]['message']['content']
+            ?.toString()
+            .trim()
+            .toUpperCase();
+        return content;
+      } else {
+        Fluttertoast.showToast(
+            msg: 'API Error: ${response.statusCode}',
+            backgroundColor: Color(0xFFDCA8A8));
+        return null;
+      }
+    } on SocketException {
+      Fluttertoast.showToast(
+          msg: 'No internet connection. Cannot generate captions.',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Color(0xFFDCA8A8),
+          textColor: Colors.white);
+      return null;
+    } catch (e) {
+      isProcessing.value = false;
+      Fluttertoast.showToast(
+          msg: 'Error processing image: $e',
+          backgroundColor: Color(0xFFDCA8A8));
+      return null;
+    }
+  }
+
+  // Método privado para verificar conectividad a internet de forma robusta
+  Future<bool> _checkInternetConnection() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        return true;
+      }
+      return false;
+    } on SocketException {
+      return false;
+    }
+  }
 }
 
 String summarizeResponse(String fullText) {
