@@ -69,7 +69,7 @@ class _WasteClassifierScreenState extends State<WasteClassifierScreen> {
         }
 
         // Si no está, llama al API
-        final result = await _chatGptService.validatePhoto(_image!.path);
+        final result = await _chatGptService.classifyWaste(_image!.path);
 
         setState(() {
           _classification = result ?? "We couldn't classify the item.";
@@ -148,16 +148,6 @@ class _WasteClassifierScreenState extends State<WasteClassifierScreen> {
               icon: const Icon(Icons.history),
               label: const Text("View History"),
             ),
-            const SizedBox(height: 20),
-            if (_image != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.file(
-                  _image!,
-                  height: 250,
-                  fit: BoxFit.cover,
-                ),
-              ),
             const SizedBox(height: 20),
             if (_image != null)
               ClipRRect(

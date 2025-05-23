@@ -126,6 +126,70 @@ class ChatGPTService {
     }
   }
 
+  Future<String?> classifyWaste(String imagePath) async {
+    try {
+      isProcessing.value = true;
+      Fluttertoast.showToast(
+          msg: 'Classifying waste type...',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.black54,
+          textColor: Colors.white);
+
+      final File imageFile = File(imagePath);
+      final List<int> imageBytes = await imageFile.readAsBytes();
+      final String base64Image = base64Encode(imageBytes);
+
+      final response = await http.post(
+        Uri.parse(_visionApiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $apiKey',
+        },
+        body: json.encode({
+          'model': 'gpt-4o',
+          'messages': [
+            {
+              'role': 'user',
+              'content': [
+                {
+                  'type': 'text',
+                  'text':
+                      'Analyze the image and determine the type of waste (e.g., plastic, organic, paper, metal, glass, etc.). Then, specify in which bin it should be disposed of, describing the color or label of that bin as used in most recycling systems (e.g., "green for organic", "blue for paper", "gray for general waste"). Return your answer in this format only: Type: <waste type>. Bin: <color and label>. Do not include extra explanation.'
+                },
+                {
+                  'type': 'image_url',
+                  'image_url': {'url': 'data:image/jpeg;base64,$base64Image'}
+                }
+              ]
+            }
+          ],
+          'max_tokens': 100
+        }),
+      );
+
+      isProcessing.value = false;
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final content =
+            data['choices'][0]['message']['content']?.toString().trim();
+        return content;
+      } else {
+        Fluttertoast.showToast(
+            msg: 'API Error: ${response.statusCode}',
+            backgroundColor: Color(0xFFDCA8A8));
+        return null;
+      }
+    } catch (e) {
+      isProcessing.value = false;
+      Fluttertoast.showToast(
+          msg: 'Error processing image: $e',
+          backgroundColor: Color(0xFFDCA8A8));
+      return null;
+    }
+  }
+
   Future<String> summarizeUsingCompute(String responseText) async {
     try {
       isProcessing.value = true;
