@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ecosphere/services/chat_gpt_service.dart';
+import 'package:hive/hive.dart';
+import 'package:ecosphere/models/classification_entry.dart';
+import 'package:path/path.dart' as p;
 
 class WasteClassifierScreen extends StatefulWidget {
   @override
@@ -44,34 +47,46 @@ class _WasteClassifierScreenState extends State<WasteClassifierScreen> {
       });
 
       try {
-        final hash = await _generateHash(_image!);
+        // HASH simple usando el nombre del archivo
+        final String hash = p.basename(_image!.path);
 
-        // Verificamos si ya fue clasificada esta imagen
-        if (_classificationCache.containsKey(hash)) {
+        // Cargar Hive
+        final box = Hive.box<ClassificationEntry>('classifications');
+
+        // Si ya está en Hive, mostrar desde caché
+        if (box.containsKey(hash)) {
+          final cached = box.get(hash);
           setState(() {
-            _classification = _classificationCache[hash];
+            _classification = cached?.classification;
+            _loading = false;
           });
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Result from cache: $_classification'),
-              backgroundColor: Colors.blueGrey,
-            ),
+                content: Text('Result from local storage: $_classification')),
           );
-        } else {
-          // Si no, a enviamos a chat
-          final result = await _chatGptService.validatePhoto(_image!.path);
-          final response = result ?? "We couldn't classify the item.";
+          return;
+        }
 
-          _classificationCache[hash] = response;
+        // Si no está, llama al API
+        final result = await _chatGptService.validatePhoto(_image!.path);
 
-          setState(() {
-            _classification = response;
-          });
+        setState(() {
+          _classification = result ?? "We couldn't classify the item.";
+        });
+
+        if (result != null) {
+          // Guardar en Hive
+          final entry = ClassificationEntry(
+            hash: hash,
+            classification: result,
+            date: DateTime.now(),
+          );
+          box.put(hash, entry);
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Classification: $response'),
+              content: Text('Classification: $result'),
               backgroundColor: Colors.green[600],
             ),
           );
@@ -125,6 +140,24 @@ class _WasteClassifierScreenState extends State<WasteClassifierScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
+            const SizedBox(height: 10),
+            TextButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, '/history');
+              },
+              icon: const Icon(Icons.history),
+              label: const Text("View History"),
+            ),
+            const SizedBox(height: 20),
+            if (_image != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.file(
+                  _image!,
+                  height: 250,
+                  fit: BoxFit.cover,
+                ),
+              ),
             const SizedBox(height: 20),
             if (_image != null)
               ClipRRect(
