@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -17,10 +18,18 @@ class _WasteClassifierScreenState extends State<WasteClassifierScreen> {
   final ImagePicker _picker = ImagePicker();
   late final ChatGPTService _chatGptService;
 
+  final Map<String, String> _classificationCache = {};
+
   @override
   void initState() {
     super.initState();
     _chatGptService = ChatGPTService(dotenv.env['KEY_ECOSPHERE']!);
+  }
+
+  // Genera un hash para identificar la imagen
+  Future<String> _generateHash(File file) async {
+    final bytes = await file.readAsBytes();
+    return base64Encode(bytes).substring(0, 50);
   }
 
   Future<void> _pickImageFromCamera() async {
@@ -35,16 +44,34 @@ class _WasteClassifierScreenState extends State<WasteClassifierScreen> {
       });
 
       try {
-        final result = await _chatGptService.validatePhoto(_image!.path);
+        final hash = await _generateHash(_image!);
 
-        setState(() {
-          _classification = result ?? "We couldn't classify the item.";
-        });
+        // Verificamos si ya fue clasificada esta imagen
+        if (_classificationCache.containsKey(hash)) {
+          setState(() {
+            _classification = _classificationCache[hash];
+          });
 
-        if (result != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Classification: $result'),
+              content: Text('Result from cache: $_classification'),
+              backgroundColor: Colors.blueGrey,
+            ),
+          );
+        } else {
+          // Si no, a enviamos a chat
+          final result = await _chatGptService.validatePhoto(_image!.path);
+          final response = result ?? "We couldn't classify the item.";
+
+          _classificationCache[hash] = response;
+
+          setState(() {
+            _classification = response;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Classification: $response'),
               backgroundColor: Colors.green[600],
             ),
           );
