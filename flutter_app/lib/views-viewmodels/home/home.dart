@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:ecosphere/views-viewmodels/waste_classifier/waste_classifier_screen.dart';
 
 // Importaciones para los botones de comentarios y upvotes
 import 'comments_button.dart';
@@ -155,21 +156,51 @@ class _HomeState extends State<Home> {
         ),
       );
 
-  Widget _buildSearchBar() => TextField(
-        controller: _searchController,
-        onChanged: (v) => setState(() => _searchQuery = v),
-        decoration: InputDecoration(
-          hintText: 'Find topics',
-          hintStyle: const TextStyle(color: Color(0xFF49447E)),
-          prefixIcon: const Icon(Icons.search, color: Color(0xFF49447E)),
-          filled: true,
-          fillColor: const Color(0xFFEAEAFF),
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(24),
-              borderSide: BorderSide.none),
-          contentPadding: const EdgeInsets.all(12),
+  Widget _buildSearchBar() {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _searchController,
+            onChanged: (v) => setState(() => _searchQuery = v),
+            decoration: InputDecoration(
+              hintText: 'Find topics',
+              hintStyle: const TextStyle(color: Color(0xFF49447E)),
+              prefixIcon: const Icon(Icons.search, color: Color(0xFF49447E)),
+              filled: true,
+              fillColor: const Color(0xFFEAEAFF),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(24),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.all(12),
+            ),
+          ),
         ),
-      );
+        const SizedBox(width: 8),
+        Container(
+          height: 48,
+          width: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFFEAEAFF),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.camera_alt, color: Color(0xFF49447E)),
+            tooltip: 'Clasificar residuo por imagen',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => WasteClassifierScreen(),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildTagChips() => SingleChildScrollView(
         scrollDirection: Axis.horizontal,

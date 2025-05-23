@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:ecosphere/firebase_options.dart';
+import 'package:ecosphere/models/classification_entry.dart';
 import 'package:ecosphere/routes/routes.dart';
 import 'package:ecosphere/services/connectivity.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -13,20 +15,27 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'dart:async';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
     listenForConnectivityChanges();
+
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
+    // Inicializa Hive
     await Hive.initFlutter();
+
+    // Registra el adapter del modelo de clasificación
+    Hive.registerAdapter(ClassificationEntryAdapter());
+
+    // Abre todos los boxes necesarios
     await Hive.openBox('posts');
     await Hive.openBox('postsQueue');
+    await Hive.openBox<ClassificationEntry>('classifications');
 
     if (kDebugMode) {
       print("Firebase inicializado correctamente");
@@ -61,7 +70,9 @@ Future<void> main() async {
   };
 
   CloudinaryContext.cloudinary = Cloudinary.fromCloudName(
-      cloudName: 'dhrkcqd33', apiKey: '537811732293891');
+    cloudName: 'dhrkcqd33',
+    apiKey: '537811732293891',
+  );
 
   // Obtener la API key de ChatGPT
   final chatGptApiKey = dotenv.env['KEY_ECOSPHERE'] ?? '';
@@ -76,7 +87,6 @@ Future<void> main() async {
   runApp(MyApp(chatGptApiKey: chatGptApiKey));
 }
 
-/// ✅ **Función para probar conexión con Firebase Authentication**
 Future<void> testFirebaseAuthConnection() async {
   try {
     await FirebaseAuth.instance.signInAnonymously();
@@ -90,7 +100,6 @@ Future<void> testFirebaseAuthConnection() async {
   }
 }
 
-/// **Función para solicitar permisos de ubicación**
 Future<void> requestLocationPermission() async {
   LocationPermission permission = await Geolocator.checkPermission();
   if (permission == LocationPermission.denied) {
