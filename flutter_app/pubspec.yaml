@@ -93,6 +93,7 @@ flutter:
     - assets/images/People/WBG/person7.png
     - assets/images/People/WBG/person8.png
     - assets/images/Logos/Google.png
+    - assets/images/People/MORE/ImagenForTrash.png
     - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
