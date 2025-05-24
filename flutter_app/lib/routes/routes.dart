@@ -13,6 +13,7 @@ import 'package:ecosphere/views-viewmodels/account/Edit_Account.dart';
 import 'package:ecosphere/views-viewmodels/account/Setting_Privacy.dart';
 import 'package:ecosphere/views-viewmodels/account/Help.dart';
 import 'package:ecosphere/views-viewmodels/account/Log_Out.dart';
+import 'package:ecosphere/views-viewmodels/waste_classifier/waste_classification_history_screen.dart';
 
 class Routes {
   static final Map<String, WidgetBuilder> routes = {
@@ -29,5 +30,6 @@ class Routes {
     '/settings': (context) => const Settings(),
     '/help': (context) => const Help(),
     '/logout': (context) => const LogoutScreen(),
+    '/history': (context) => const WasteClassificationHistoryScreen(),
   };
 }

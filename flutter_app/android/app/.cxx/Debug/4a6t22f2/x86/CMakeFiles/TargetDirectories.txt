@@ -1,0 +1,2 @@
+C:/Users/VivoBook/OneDrive - Universidad de los Andes/University/202510 Semestre/Moviles/flutter_project/flutter_app/android/app/.cxx/Debug/4a6t22f2/x86/CMakeFiles/edit_cache.dir
+C:/Users/VivoBook/OneDrive - Universidad de los Andes/University/202510 Semestre/Moviles/flutter_project/flutter_app/android/app/.cxx/Debug/4a6t22f2/x86/CMakeFiles/rebuild_cache.dir
